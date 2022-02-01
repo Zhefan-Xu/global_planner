@@ -186,7 +186,6 @@ namespace globalPlanner{
 
 	template <std::size_t N>
 	void rrtBase<N>::newConfig(const KDTree::Point<N>& qNear, const KDTree::Point<N>& qRand, KDTree::Point<N>& qNew){
-		// TODO: implement steer function
 		double distance = Distance(qNear, qRand);
 		KDTree::Point<N> direction = qRand - qNear;
 		qNew = qNear + (this->delQ_/distance) * direction;
