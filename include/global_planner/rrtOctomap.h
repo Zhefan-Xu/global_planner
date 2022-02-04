@@ -67,7 +67,7 @@ namespace globalPlanner{
 		// collision checking function based on map and collision box: TRUE => Collision
 		virtual bool checkCollision(const KDTree::Point<N>& q);
 		bool checkCollision(const octomap::point3d& p);
-		bool checkCollisionPoint(const octomap::point3d &p);
+		bool checkCollisionPoint(const octomap::point3d &p, bool ignoreUnkown=true);
 		bool checkCollisionLine(const KDTree::Point<N>& q1, const KDTree::Point<N>& q2);
 		bool checkCollisionLine(const octomap::point3d& p1, const octomap::point3d& p2);
 
@@ -181,10 +181,10 @@ namespace globalPlanner{
 		ymin = p.y() - this->collisionBox_[1]/2; ymax = p.y() + this->collisionBox_[1]/2;
 		zmin = p.z() - this->collisionBox_[2]/2; zmax = p.z() + this->collisionBox_[2]/2;
 
-		for (double x=xmin; x<xmax; x+=this->mapRes_){
-			for (double y=ymin; y<ymax; y+=this->mapRes_){
-				for (double z=zmin; z<zmax; z+=this->mapRes_){
-					if (!this->checkCollisionPoint(octomap::point3d (x, y, z))){
+		for (double x=xmin; x<=xmax; x+=this->mapRes_){
+			for (double y=ymin; y<=ymax; y+=this->mapRes_){
+				for (double z=zmin; z<=zmax; z+=this->mapRes_){
+					if (!this->checkCollisionPoint(octomap::point3d (x, y, z), false)){
 						// do nothing
 					}
 					else{
@@ -197,10 +197,15 @@ namespace globalPlanner{
 	}
 
 	template <std::size_t N>
-	bool rrtOctomap<N>::checkCollisionPoint(const octomap::point3d &p){
+	bool rrtOctomap<N>::checkCollisionPoint(const octomap::point3d &p, bool ignoreUnkown){
 		octomap::OcTreeNode* nptr = this->map_->search(p);
 		if (nptr == NULL){
-			return true;
+			if (not ignoreUnkown){
+				return true;
+			}
+			else{
+				return false;
+			}
 		}
 		return this->map_->isNodeOccupied(nptr);
 	}
@@ -217,6 +222,10 @@ namespace globalPlanner{
 	bool rrtOctomap<N>::checkCollisionLine(const octomap::point3d& p1, const octomap::point3d& p2){
 		std::vector<octomap::point3d> ray;
 		this->map_->computeRay(p1, p2, ray);
+		if (this->checkCollision(p2)){
+			return true;
+		}
+
 		for (octomap::point3d p: ray){
 			if (this->checkCollision(p)){
 				return true;
