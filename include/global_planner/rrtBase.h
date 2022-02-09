@@ -22,12 +22,11 @@ namespace globalPlanner{
 	template <std::size_t N>
 	class rrtBase{
 	private:
-		double delQ_; // incremental distance
-		double dR_; // criteria for goal reaching
-
 		ros::NodeHandle nh_;
 
 	protected:
+		double delQ_; // incremental distance
+		double dR_; // criteria for goal reaching
 		KDTree::Point<N> start_;
 		KDTree::Point<N> goal_;
 		KDTree::Point<N> emptyToken_;
@@ -122,7 +121,9 @@ namespace globalPlanner{
 
 	// ===============Function Definition===============================
 		template <std::size_t N>
-	rrtBase<N>::rrtBase(){};
+	rrtBase<N>::rrtBase(){
+		this->emptyToken_[0] = -11311; 
+	};
 
 	// Constructor:
 	template <std::size_t N>

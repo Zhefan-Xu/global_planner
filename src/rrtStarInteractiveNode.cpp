@@ -1,6 +1,5 @@
 #include <ros/ros.h>
 #include <global_planner/rrtStarOctomap.h>
-#include <global_planner/utils.h>
 #include <geometry_msgs/PoseStamped.h>
 
 using std::cout;
@@ -17,29 +16,15 @@ void clickedPointCB(const geometry_msgs::PoseStamped::ConstPtr& cp){
 }
 
 int main(int argc, char** argv){
-	ros::init(argc, argv, "RRT_test_node");
+	ros::init(argc, argv, "RRT*_test_node");
 	ros::NodeHandle nh;
 
 	// subscriber for clicked start and goal:
 	ros::Subscriber clickedPointSub = nh.subscribe("/move_base_simple/goal", 1000, clickedPointCB);
 
 	// Parameters for rrt planner:
-	const int N = 3; // dimension
-	std::vector<double> collisionBox, envBox;
-	double delQ, dR, connectGoalRatio, mapRes, timeout, rNeighborhood, maxNeighbors;
-	bool visRRT, visPath;
-	nh.getParam("/collision_box", collisionBox);
-	nh.getParam("/env_box", envBox);
-	nh.getParam("/rrt_incremental_distance", delQ);
-	nh.getParam("/rrt_incremental_distance", connectGoalRatio);
-	nh.getParam("/goal_reach_distance", dR);
-	nh.getParam("/map_resolution", mapRes);
-	nh.getParam("/timeout", timeout);
-	nh.getParam("/vis_path", visPath);
-	nh.getParam("/neighborhood_radius", rNeighborhood);
-	nh.getParam("/max_num_neighbors", maxNeighbors);
-	
-	globalPlanner::rrtStarOctomap<N> rrtStarPlanner (nh, rNeighborhood, maxNeighbors, collisionBox, envBox, mapRes, delQ, dR, connectGoalRatio, timeout, visPath);
+	const int N = 3; // dimension	
+	globalPlanner::rrtStarOctomap<N> rrtStarPlanner (nh);
 	cout << rrtStarPlanner << endl;
 
 	int countLoop = 0;
@@ -74,8 +59,8 @@ int main(int argc, char** argv){
 		}
 
 		
-		std::vector<KDTree::Point<N>> plan;
-		rrtStarPlanner.makePlan(plan);
+		nav_msgs::Path path;
+		rrtStarPlanner.makePlan(path);
 
 		++countLoop;
 		cout << "----------------------------------------------------" << endl;

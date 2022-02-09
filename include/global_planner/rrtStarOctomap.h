@@ -19,6 +19,9 @@ namespace globalPlanner{
 	public:
 		// default
 		rrtStarOctomap();
+
+		// constructor using ros param:
+		rrtStarOctomap(const ros::NodeHandle& nh);
 	
 		// constructor:
 		rrtStarOctomap(const ros::NodeHandle& nh, double rNeighborhood, double maxNeighbors, std::vector<double> collisionBox, std::vector<double> envBox, double mapRes, double delQ=0.3, double dR=0.2, double connectGoalRatio=0.10, double timeout=1.0, bool visPath=true);
@@ -37,12 +40,85 @@ namespace globalPlanner{
 
 		// *** Core function: make plan based on all input ***
 		virtual void makePlan(std::vector<KDTree::Point<N>>& plan);
+		virtual void makePlan(nav_msgs::Path& plan);
 
 		// return neighborhood radius:
 		double getNeighborHoodRadius();
 	};
 	
 	// ============function definition===================
+	template <std::size_t N>
+	rrtStarOctomap<N>::rrtStarOctomap(const ros::NodeHandle& nh) : nh_(nh), rrtOctomap<N>(){
+		// Map Resolution for Collisiong checking
+		if (not this->nh_.getParam("map_resolution", this->mapRes_)){
+			this->mapRes_ = 0.2;
+			cout << "[Global Planner INFO]: No Map Resolition Parameter. Use default map resolution: 0.2." << endl;
+		}
+
+		// Visualize Path
+		if (not this->nh_.getParam("vis_path", this->visPath_)){
+			this->visPath_ = true;
+			cout << "[Global Planner INFO]: Visualize Path by default." << endl;
+		}
+
+		// Collision Box
+		if (not this->nh_.getParam("collision_box", this->collisionBox_)){
+			std::vector<double> defaultCollisionBox {1.0, 1.0, 0.6};
+			this->collisionBox_ = defaultCollisionBox;
+			cout << "[Global Planner INFO]: No Collision Box Parameter. Use default collision Box: [1.0, 1.0, 0.6]." << endl;
+		}
+
+		// Environment Size (maximum)
+		if (not this->nh_.getParam("env_box", this->envBox_)){
+			std::vector<double> defaultEnvBox {-100, 100, -100, 100, 0, 1.5};
+			cout << "[Global Planner INFO]: No Environment Box Parameter. Use default env box: [-100, 100, -100, 100, 0, 1.5]." << endl;
+		}
+
+		// Incremental Distance (For RRT)
+		if (not this->nh_.getParam("rrt_incremental_distance", this->delQ_)){
+			this->delQ_ = 0.3;
+			cout << "[Global Planner INFO]: No RRT Incremental Distance Parameter. Use default value: 0.3m." << endl;
+		}
+
+		// Goal Reach Distance
+		if (not this->nh_.getParam("goal_reach_distance", this->dR_)){
+			this->dR_ = 0.4;
+			cout << "[Global Planner INFO]: No RRT Goal Reach Distance Parameter. Use default value: 0.4m." << endl;
+		}
+
+		// RRT Connect Goal Ratio
+		if (not this->nh_.getParam("rrt_connect_goal_ratio", this->connectGoalRatio_)){
+			this->connectGoalRatio_ = 0.2;
+			cout << "[Global Planner INFO]: No RRT Connect Goal Ratio Parameter. Use default value: 0.2." << endl;
+		}
+
+		// Time out:
+		if (not this->nh_.getParam("timeout", this->timeout_)){
+			this->timeout_ = 2.0;
+			cout << "[Global Planner INFO]: No Timeout Parameter. Use default value: 3.0s." << endl;
+		}
+
+		// Neighborhood radius:
+		if (not this->nh_.getParam("neighborhood_radius", this->rNeighborhood_)){
+			this->rNeighborhood_ = 1.0;
+			cout << "[Global Planner INFO]: No Neighborhood Radius. Use default value: 1.0m." << endl;
+		}
+
+		// Maximum Number of Neighbors:
+		if (not this->nh_.getParam("max_num_neighbors", this->maxNeighbors_)){
+			this->maxNeighbors_ = 10;
+			cout << "[Global Planner INFO]: No Max Number of Neighbors Paramter. Use default: 10." << endl;
+		}
+
+		this->visRRT_ = false;		
+
+		this->mapClient_ = this->nh_.serviceClient<octomap_msgs::GetOctomap>("/octomap_binary");
+		this->updateMap();
+		
+		// Visualization:
+		this->startVisModule();
+	}
+
 	template <std::size_t N>
 	rrtStarOctomap<N>::rrtStarOctomap(const ros::NodeHandle& nh, double rNeighborhood, double maxNeighbors, std::vector<double> collisionBox, std::vector<double> envBox, double mapRes, double delQ, double dR, double connectGoalRatio, double timeout, bool visPath)
 	: nh_(nh), rNeighborhood_(rNeighborhood), maxNeighbors_(maxNeighbors),  rrtOctomap<N>(collisionBox, envBox, mapRes, delQ, dR, connectGoalRatio, timeout, false, visPath){
@@ -195,6 +271,13 @@ namespace globalPlanner{
 			this->updatePathVisVec(plan);
 			this->pathVisMsg_.markers = this->pathVisVec_;
 		}
+	}
+
+	template <std::size_t N>
+	void rrtStarOctomap<N>::makePlan(nav_msgs::Path& plan){
+		std::vector<KDTree::Point<N>> planTemp;
+		this->makePlan(planTemp);
+		this->pathMsgConverter(planTemp, plan);
 	}
 
 	template <std::size_t N>

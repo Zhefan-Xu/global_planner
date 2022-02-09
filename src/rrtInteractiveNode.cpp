@@ -1,6 +1,5 @@
 #include <ros/ros.h>
 #include <global_planner/rrtOctomap.h>
-#include <global_planner/utils.h>
 #include <geometry_msgs/PoseStamped.h>
 
 using std::cout;
@@ -25,20 +24,7 @@ int main(int argc, char** argv){
 
 	// Parameters for rrt planner:
 	const int N = 3; // dimension
-	std::vector<double> collisionBox, envBox;
-	double delQ, dR, connectGoalRatio, mapRes, timeout;
-	bool visRRT, visPath;
-	nh.getParam("/collision_box", collisionBox);
-	nh.getParam("/env_box", envBox);
-	nh.getParam("/rrt_incremental_distance", delQ);
-	nh.getParam("/rrt_incremental_distance", connectGoalRatio);
-	nh.getParam("/goal_reach_distance", dR);
-	nh.getParam("/map_resolution", mapRes);
-	nh.getParam("/timeout", timeout);
-	nh.getParam("/vis_RRT", visRRT);
-	nh.getParam("/vis_path", visPath);
-	
-	globalPlanner::rrtOctomap<N> rrtplanner (nh, collisionBox, envBox, mapRes, delQ, dR, connectGoalRatio, timeout, visRRT, visPath);
+	globalPlanner::rrtOctomap<N> rrtplanner (nh);
 	cout << rrtplanner << endl;
 
 	int countLoop = 0;
@@ -73,8 +59,8 @@ int main(int argc, char** argv){
 		}
 
 		
-		std::vector<KDTree::Point<N>> plan;
-		rrtplanner.makePlan(plan);
+		nav_msgs::Path path;
+		rrtplanner.makePlan(path);
 
 		++countLoop;
 		cout << "----------------------------------------------------" << endl;

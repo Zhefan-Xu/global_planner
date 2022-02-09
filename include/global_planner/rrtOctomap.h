@@ -11,6 +11,7 @@
 #include <octomap_msgs/Octomap.h>
 #include <octomap_msgs/GetOctomap.h>
 #include <octomap_msgs/conversions.h>
+#include <nav_msgs/Path.h>
 #include <limits>
 #include <visualization_msgs/MarkerArray.h>
 #include <thread>
@@ -48,6 +49,9 @@ namespace globalPlanner{
 		// default constructor
 		rrtOctomap();
 
+		// constructor using ros param:
+		rrtOctomap(const ros::NodeHandle& nh);
+
 		// constructor using point format
 		rrtOctomap(const ros::NodeHandle& nh, KDTree::Point<N> start, KDTree::Point<N> goal, std::vector<double> collisionBox, std::vector<double> envBox, double mapRes, double delQ=0.3, double dR=0.2, double connectGoalRatio=0.10, double timeout=1.0, bool visRRT=false, bool visPath=true);
 
@@ -59,6 +63,7 @@ namespace globalPlanner{
 		
 		// constructor without nh	
 		rrtOctomap(std::vector<double> collisionBox, std::vector<double> envBox, double mapRes, double delQ=0.3, double dR=0.2, double connectGoalRatio=0.10, double timeout=1.0, bool visRRT=false, bool visPath=true);
+
 
 		// update octomap
 		virtual void updateMap();	
@@ -79,6 +84,7 @@ namespace globalPlanner{
 
 		// *** Core function: make plan based on all input ***
 		virtual void makePlan(std::vector<KDTree::Point<N>>& plan);
+		virtual void makePlan(nav_msgs::Path& plan);
 
 		// Visualization
 		void startVisModule();
@@ -90,6 +96,9 @@ namespace globalPlanner{
 		// Helper function for collision checking:
 		void point2Octomap(const KDTree::Point<N>& q, octomap::point3d& p);
 
+		// Helper function: convert to ROS message
+		void pathMsgConverter(const std::vector<KDTree::Point<N>>& pathTemp, nav_msgs::Path& path);
+
 
 		double getMapRes();
 	};
@@ -97,7 +106,74 @@ namespace globalPlanner{
 
 	// ===========================Function Definition=======================================
 	template <std::size_t N>
-	rrtOctomap<N>::rrtOctomap(){}
+	rrtOctomap<N>::rrtOctomap() : rrtBase<N>(){}
+
+	template <std::size_t N>
+	rrtOctomap<N>::rrtOctomap(const ros::NodeHandle& nh) : nh_(nh), rrtBase<N>(){
+		// load parameters:
+		// Map Resolution for Collisiong checking
+		if (not this->nh_.getParam("map_resolution", this->mapRes_)){
+			this->mapRes_ = 0.2;
+			cout << "[Global Planner INFO]: No Map Resolition Parameter. Use default map resolution: 0.2." << endl;
+		}
+
+		// Visualize RRT 
+		if (not this->nh_.getParam("vis_RRT", this->visRRT_)){
+			this->visRRT_ = false;
+			cout << "[GLobal Planner INFO]: No RRT visualization by default." << endl;
+		}
+
+		// Visualize Path
+		if (not this->nh_.getParam("vis_path", this->visPath_)){
+			this->visPath_ = true;
+			cout << "[Global Planner INFO]: Visualize Path by default." << endl;
+		}
+
+		// Collision Box
+		if (not this->nh_.getParam("collision_box", this->collisionBox_)){
+			std::vector<double> defaultCollisionBox {1.0, 1.0, 0.6};
+			this->collisionBox_ = defaultCollisionBox;
+			cout << "[Global Planner INFO]: No Collision Box Parameter. Use default collision Box: [1.0, 1.0, 0.6]." << endl;
+		}
+
+		// Environment Size (maximum)
+		if (not this->nh_.getParam("env_box", this->envBox_)){
+			std::vector<double> defaultEnvBox {-100, 100, -100, 100, 0, 1.5};
+			cout << "[Global Planner INFO]: No Environment Box Parameter. Use default env box: [-100, 100, -100, 100, 0, 1.5]." << endl;
+		}
+
+		// Incremental Distance (For RRT)
+		if (not this->nh_.getParam("rrt_incremental_distance", this->delQ_)){
+			this->delQ_ = 0.3;
+			cout << "[Global Planner INFO]: No RRT Incremental Distance Parameter. Use default value: 0.3m." << endl;
+		}
+
+		// Goal Reach Distance
+		if (not this->nh_.getParam("goal_reach_distance", this->dR_)){
+			this->dR_ = 0.4;
+			cout << "[Global Planner INFO]: No RRT Goal Reach Distance Parameter. Use default value: 0.4m." << endl;
+		}
+
+		// RRT Connect Goal Ratio
+		if (not this->nh_.getParam("rrt_connect_goal_ratio", this->connectGoalRatio_)){
+			this->connectGoalRatio_ = 0.2;
+			cout << "[Global Planner INFO]: No RRT Connect Goal Ratio Parameter. Use default value: 0.2." << endl;
+		}
+
+		// Time out:
+		if (not this->nh_.getParam("timeout", this->timeout_)){
+			this->timeout_ = 2.0;
+			cout << "[Global Planner INFO]: No Timeout Parameter. Use default value: 3.0s." << endl;
+		}
+
+
+		this->mapClient_ = this->nh_.serviceClient<octomap_msgs::GetOctomap>("/octomap_binary");
+		this->updateMap();
+
+		// Visualization:
+		this->startVisModule();
+	
+	}
 
 	template <std::size_t N>
 	rrtOctomap<N>::rrtOctomap(const ros::NodeHandle& nh, KDTree::Point<N> start, KDTree::Point<N> goal, std::vector<double> collisionBox, std::vector<double> envBox, double mapRes, double delQ, double dR, double connectGoalRatio, double timeout, bool visRRT, bool visPath)
@@ -131,9 +207,9 @@ namespace globalPlanner{
 	
 	template <std::size_t N>
 	rrtOctomap<N>::rrtOctomap(std::vector<double> collisionBox, std::vector<double> envBox, double mapRes, double delQ, double dR, double connectGoalRatio, double timeout, bool visRRT, bool visPath)
-	: mapRes_(mapRes), visRRT_(visRRT), visPath_(visPath), rrtBase<N>(collisionBox, envBox, delQ, dR, connectGoalRatio, timeout){
+	: mapRes_(mapRes), visRRT_(visRRT), visPath_(visPath), rrtBase<N>(collisionBox, envBox, delQ, dR, connectGoalRatio, timeout){}
 
-	}
+
 
 
 	template <std::size_t N>
@@ -372,6 +448,13 @@ namespace globalPlanner{
 	}
 
 	template <std::size_t N>
+	void rrtOctomap<N>::makePlan(nav_msgs::Path& plan){
+		std::vector<KDTree::Point<N>> planTemp;
+		this->makePlan(planTemp);
+		this->pathMsgConverter(planTemp, plan);
+	}
+
+	template <std::size_t N>
 	void rrtOctomap<N>::startVisModule(){
 		if (this->visRRT_){
 			this->RRTVisPub_ = this->nh_.advertise<visualization_msgs::MarkerArray>("/rrt_vis_array", 1);
@@ -514,6 +597,23 @@ namespace globalPlanner{
 		p.x() = q[0];
 		p.y() = q[1];
 		p.z() = q[2];
+	}
+
+	template <std::size_t N>
+	void rrtOctomap<N>::pathMsgConverter(const std::vector<KDTree::Point<N>>& pathTemp, nav_msgs::Path& path){
+		std::vector<geometry_msgs::PoseStamped> pathVec;
+		for (KDTree::Point<N> p: pathTemp){
+			geometry_msgs::PoseStamped ps;
+			ps.header.stamp = ros::Time();
+			ps.header.frame_id = "map";
+			ps.pose.position.x = p[0];
+			ps.pose.position.y = p[1];
+			ps.pose.position.z = p[2];
+			pathVec.push_back(ps);
+		}
+		path.poses = pathVec;
+		path.header.stamp = ros::Time();
+		path.header.frame_id = "map";
 	}
 
 	template <std::size_t N>
