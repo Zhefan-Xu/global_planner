@@ -257,13 +257,15 @@ namespace globalPlanner{
 		ymin = p.y() - this->collisionBox_[1]/2; ymax = p.y() + this->collisionBox_[1]/2;
 		zmin = p.z() - this->collisionBox_[2]/2; zmax = p.z() + this->collisionBox_[2]/2;
 
-		for (double x=xmin; x<=xmax; x+=this->mapRes_){
-			for (double y=ymin; y<=ymax; y+=this->mapRes_){
-				for (double z=zmin; z<=zmax; z+=this->mapRes_){
-					if (!this->checkCollisionPoint(octomap::point3d (x, y, z), false)){
-						// do nothing
-					}
-					else{
+		int xNum = (xmax - xmin)/this->mapRes_;
+		int yNum = (ymax - ymin)/this->mapRes_;
+		int zNum = (zmax - zmin)/this->mapRes_;
+
+		int xID, yID, zID;
+		for (xID=0; xID<=xNum; ++xID){
+			for (yID=0; yID<=yNum; ++yID){
+				for (zID=0; zID<=zNum; ++zID){
+					if (this->checkCollisionPoint(octomap::point3d(xmin+xID*this->mapRes_, ymin+yID*this->mapRes_, zmin+zID*this->mapRes_), false)){
 						return true;
 					}
 				}
