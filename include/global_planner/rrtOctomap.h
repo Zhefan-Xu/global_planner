@@ -5,7 +5,7 @@
 */
 #ifndef RRTOCTOMAP_H
 #define RRTOCTOMAP_H
-#include<ros/ros.h>
+#include <ros/ros.h>
 #include <global_planner/rrtBase.h>
 #include <octomap/octomap.h>
 #include <octomap_msgs/Octomap.h>
@@ -72,7 +72,7 @@ namespace globalPlanner{
 		// collision checking function based on map and collision box: TRUE => Collision
 		virtual bool checkCollision(const KDTree::Point<N>& q);
 		bool checkCollision(const octomap::point3d& p);
-		bool checkCollisionPoint(const octomap::point3d &p, bool ignoreUnkown=true);
+		bool checkCollisionPoint(const octomap::point3d &p, bool ignoreUnknown=true);
 		bool checkCollisionLine(const KDTree::Point<N>& q1, const KDTree::Point<N>& q2);
 		bool checkCollisionLine(const octomap::point3d& p1, const octomap::point3d& p2);
 
@@ -275,10 +275,10 @@ namespace globalPlanner{
 	}
 
 	template <std::size_t N>
-	bool rrtOctomap<N>::checkCollisionPoint(const octomap::point3d &p, bool ignoreUnkown){
+	bool rrtOctomap<N>::checkCollisionPoint(const octomap::point3d &p, bool ignoreUnknown){
 		octomap::OcTreeNode* nptr = this->map_->search(p);
 		if (nptr == NULL){
-			if (not ignoreUnkown){
+			if (not ignoreUnknown){
 				return true;
 			}
 			else{
