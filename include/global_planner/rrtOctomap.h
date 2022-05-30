@@ -340,8 +340,10 @@ namespace globalPlanner{
 		int ptr1 = 0; int ptr2 = 1;
 		planSc.push_back(plan[ptr1]);
 		while (true and ros::ok()){
+			cout << "here" << endl;
 			KDTree::Point<N> p1 = plan[ptr1]; KDTree::Point<N> p2 = plan[ptr2];
 			if (not checkCollisionLine(p1, p2)){
+				cout << "has collision" << endl;
 				if (ptr2 >= plan.size()-1){
 					planSc.push_back(p2);
 					break;
@@ -349,6 +351,9 @@ namespace globalPlanner{
 				++ptr2;
 			}
 			else{
+				cout << "no collision" << endl;
+				cout << "ptr1: " << ptr1 << ", ptr2: " << ptr2 << endl;
+				cout << plan.size() << endl;
 				planSc.push_back(plan[ptr2-1]);
 				ptr1 = ptr2-1;
 			}
