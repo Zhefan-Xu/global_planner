@@ -26,6 +26,8 @@ namespace globalPlanner{
 		// constructor:
 		rrtStarOctomap(const ros::NodeHandle& nh, double rNeighborhood, double maxNeighbors, std::vector<double> collisionBox, std::vector<double> envBox, double mapRes, double delQ=0.3, double dR=0.2, double connectGoalRatio=0.10, double timeout=1.0, bool visPath=true);
 		
+		void mapCB(const octomap_msgs::Octomap &msg);
+
 		// get neighborhood points from the vector
 		void getNeighborhood(const KDTree::Point<N>& q, std::vector<KDTree::Point<N>>& neighborhood);
 
@@ -113,7 +115,16 @@ namespace globalPlanner{
 		this->visRRT_ = false;		
 
 		this->mapClient_ = this->nh_.serviceClient<octomap_msgs::GetOctomap>("/octomap_binary");
-		this->updateMap();
+		// this->updateMap();
+
+		this->mapSub_ = this->nh_.subscribe("/octomap_full", 1, &rrtStarOctomap::mapCB, this);
+		ros::Rate r (10);
+		while (ros::ok() and this->map_ == NULL){
+			cout << "[Global Planner INFO]: Wait for Map..." << endl;
+			ros::spinOnce();
+			r.sleep();
+		}
+		cout << "[Global Planner INFO]: Map Updated!" << endl;
 		
 		// Visualization:
 		this->startVisModule();
@@ -123,10 +134,21 @@ namespace globalPlanner{
 	rrtStarOctomap<N>::rrtStarOctomap(const ros::NodeHandle& nh, double rNeighborhood, double maxNeighbors, std::vector<double> collisionBox, std::vector<double> envBox, double mapRes, double delQ, double dR, double connectGoalRatio, double timeout, bool visPath)
 	: nh_(nh), rNeighborhood_(rNeighborhood), maxNeighbors_(maxNeighbors),  rrtOctomap<N>(collisionBox, envBox, mapRes, delQ, dR, connectGoalRatio, timeout, false, visPath){
 		this->mapClient_ = this->nh_.serviceClient<octomap_msgs::GetOctomap>("/octomap_binary");
-		this->updateMap();
+		// this->updateMap();
 
 		// Visualization:
 		this->startVisModule();
+	}
+
+	template <std::size_t N>
+	void rrtStarOctomap<N>::mapCB(const octomap_msgs::Octomap &msg){
+    	octomap::OcTree* treePtr = dynamic_cast<octomap::OcTree*>(octomap_msgs::msgToMap(msg));
+   	 	this->map_ = std::shared_ptr<octomap::OcTree>(treePtr);		
+   	 	double min_x, max_x, min_y, max_y, min_z, max_z;
+		this->map_->getMetricMax(max_x, max_y, max_z);
+		this->map_->getMetricMin(min_x, min_y, min_z);
+		this->envLimit_[0] = min_x; this->envLimit_[1] = max_x; this->envLimit_[2] = min_y; this->envLimit_[3] = max_y; this->envLimit_[4] = min_z; this->envLimit_[5] = max_z;
+		this->updateSampleRegion();
 	}
 
 	template <std::size_t N>

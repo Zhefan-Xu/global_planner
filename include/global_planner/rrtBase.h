@@ -233,6 +233,7 @@ namespace globalPlanner{
 		}
 	}
 
+
 	template <std::size_t N>
 	void rrtBase<N>::updateGoal(const std::vector<double>& newGoal){
 		KDTree::Point<N> newGoalp = KDTree::vec2Point<N>(newGoal);

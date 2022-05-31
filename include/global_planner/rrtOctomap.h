@@ -26,13 +26,14 @@ namespace globalPlanner{
 
 	protected:
 		ros::ServiceClient mapClient_;
+		ros::Subscriber mapSub_;
 		ros::Publisher RRTVisPub_;
 		ros::Publisher pathVisPub_;
 
 		double mapRes_;
 		double envLimit_[6];
 		double sampleRegion_[6];
-		octomap::OcTree* map_;
+		std::shared_ptr<octomap::OcTree> map_ {NULL};
 		
 		visualization_msgs::MarkerArray RRTVisMsg_;
 		visualization_msgs::MarkerArray pathVisMsg_;
@@ -66,7 +67,8 @@ namespace globalPlanner{
 
 
 		// update octomap
-		virtual void updateMap();	
+		virtual void updateMap(); // update map use service
+		void mapCB(const octomap_msgs::Octomap &msg);
 		void updateSampleRegion();// helper function for update sample region
 		
 		// collision checking function based on map and collision box: TRUE => Collision
@@ -168,7 +170,16 @@ namespace globalPlanner{
 
 
 		this->mapClient_ = this->nh_.serviceClient<octomap_msgs::GetOctomap>("/octomap_binary");
-		this->updateMap();
+		// this->updateMap();
+		this->mapSub_ = this->nh_.subscribe("/octomap_full", 1, &rrtOctomap::mapCB, this);
+
+		ros::Rate r (10);
+		while (ros::ok() and this->map_ == NULL){
+			cout << "[Global Planner INFO]: Wait for Map..." << endl;
+			ros::spinOnce();
+			r.sleep();
+		}
+		cout << "[Global Planner INFO]: Map Updated!" << endl;
 
 		// Visualization:
 		this->startVisModule();
@@ -179,7 +190,7 @@ namespace globalPlanner{
 	rrtOctomap<N>::rrtOctomap(const ros::NodeHandle& nh, KDTree::Point<N> start, KDTree::Point<N> goal, std::vector<double> collisionBox, std::vector<double> envBox, double mapRes, double delQ, double dR, double connectGoalRatio, double timeout, bool visRRT, bool visPath)
 	: nh_(nh), mapRes_(mapRes), visRRT_(visRRT), visPath_(visPath), rrtBase<N>(start, goal, collisionBox, envBox, delQ, dR, connectGoalRatio){
 		this->mapClient_ = this->nh_.serviceClient<octomap_msgs::GetOctomap>("/octomap_binary");
-		this->updateMap();
+		// this->updateMap();
 
 		// Visualization:
 		this->startVisModule();
@@ -189,7 +200,7 @@ namespace globalPlanner{
 	rrtOctomap<N>::rrtOctomap(const ros::NodeHandle& nh, std::vector<double> start, std::vector<double> goal,  std::vector<double> collisionBox, std::vector<double> envBox, double mapRes, double delQ, double dR, double connectGoalRatio, double timeout, bool visRRT, bool visPath)
 	: nh_(nh), mapRes_(mapRes), visRRT_(visRRT), visPath_(visPath), rrtBase<N>(start, goal, collisionBox, envBox, delQ, dR, connectGoalRatio, timeout){
 		this->mapClient_ = this->nh_.serviceClient<octomap_msgs::GetOctomap>("/octomap_binary");
-		this->updateMap();
+		// this->updateMap();
 
 		// Visualization:
 		this->startVisModule();
@@ -199,7 +210,7 @@ namespace globalPlanner{
 	rrtOctomap<N>::rrtOctomap(const ros::NodeHandle& nh, std::vector<double> collisionBox, std::vector<double> envBox, double mapRes, double delQ, double dR, double connectGoalRatio, double timeout, bool visRRT, bool visPath)
 	:  nh_(nh), mapRes_(mapRes), visRRT_(visRRT), visPath_(visPath), rrtBase<N>(collisionBox, envBox, delQ, dR, connectGoalRatio, timeout){
 		this->mapClient_ = this->nh_.serviceClient<octomap_msgs::GetOctomap>("/octomap_binary");
-		this->updateMap();
+		// this->updateMap();
 		
 		// Visualization:
 		this->startVisModule();
@@ -223,7 +234,7 @@ namespace globalPlanner{
 			rate.sleep();
 		}
 		octomap::AbstractOcTree* abtree = octomap_msgs::binaryMsgToMap(mapSrv.response.map);
-		this->map_ = dynamic_cast<octomap::OcTree*>(abtree);
+		this->map_ = std::shared_ptr<octomap::OcTree>(dynamic_cast<octomap::OcTree*>(abtree));
 		// this->map_->setResolution(this->mapRes_);
 		double min_x, max_x, min_y, max_y, min_z, max_z;
 		this->map_->getMetricMax(max_x, max_y, max_z);
@@ -231,6 +242,18 @@ namespace globalPlanner{
 		this->envLimit_[0] = min_x; this->envLimit_[1] = max_x; this->envLimit_[2] = min_y; this->envLimit_[3] = max_y; this->envLimit_[4] = min_z; this->envLimit_[5] = max_z;
 		this->updateSampleRegion();
 		cout << "[Global Planner INFO]: Map updated!" << endl;
+	}
+
+	template <std::size_t N>
+	void rrtOctomap<N>::mapCB(const octomap_msgs::Octomap &msg){
+    	octomap::OcTree* treePtr = dynamic_cast<octomap::OcTree*>(octomap_msgs::msgToMap(msg));
+   	 	this->map_ = std::shared_ptr<octomap::OcTree>(treePtr);		
+   	 	double min_x, max_x, min_y, max_y, min_z, max_z;
+		this->map_->getMetricMax(max_x, max_y, max_z);
+		this->map_->getMetricMin(min_x, min_y, min_z);
+		this->envLimit_[0] = min_x; this->envLimit_[1] = max_x; this->envLimit_[2] = min_y; this->envLimit_[3] = max_y; this->envLimit_[4] = min_z; this->envLimit_[5] = max_z;
+		this->updateSampleRegion();
+		cout << "here" << endl;
 	}
 
 	template <std::size_t N>
