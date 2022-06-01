@@ -337,13 +337,28 @@ namespace globalPlanner{
 
 	template <std::size_t N>
 	void rrtOctomap<N>::shortcutWaypointPaths(const std::vector<KDTree::Point<N>>& plan, std::vector<KDTree::Point<N>>& planSc){
-		int ptr1 = 0; int ptr2 = 1;
+		int ptr1 = 0; int ptr2 = 2;
 		planSc.push_back(plan[ptr1]);
-		while (true and ros::ok()){
-			cout << "here" << endl;
+
+		if (plan.size() == 1){
+			return;
+		}
+
+		if (plan.size() == 2){
+			planSc.push_back(plan[1]);
+			return;
+		}
+
+		while (ros::ok()){
+			// cout << "here" << endl;
+			// cout << "total size: " << plan.size() << endl;
+			if (ptr2 > plan.size()-1){
+				// cout << "error" << endl;
+				break;
+			}
 			KDTree::Point<N> p1 = plan[ptr1]; KDTree::Point<N> p2 = plan[ptr2];
 			if (not checkCollisionLine(p1, p2)){
-				cout << "has collision" << endl;
+				// cout << "has collision" << endl;
 				if (ptr2 >= plan.size()-1){
 					planSc.push_back(p2);
 					break;
@@ -351,11 +366,12 @@ namespace globalPlanner{
 				++ptr2;
 			}
 			else{
-				cout << "no collision" << endl;
-				cout << "ptr1: " << ptr1 << ", ptr2: " << ptr2 << endl;
-				cout << plan.size() << endl;
+				// cout << "no collision" << endl;
+				// cout << "ptr1: " << ptr1 << ", ptr2: " << ptr2 << endl;
+				// cout << plan.size() << endl;
 				planSc.push_back(plan[ptr2-1]);
 				ptr1 = ptr2-1;
+				ptr2 = ptr1+2;
 			}
 		}
 	}
