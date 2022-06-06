@@ -253,7 +253,6 @@ namespace globalPlanner{
 		this->map_->getMetricMin(min_x, min_y, min_z);
 		this->envLimit_[0] = min_x; this->envLimit_[1] = max_x; this->envLimit_[2] = min_y; this->envLimit_[3] = max_y; this->envLimit_[4] = min_z; this->envLimit_[5] = max_z;
 		this->updateSampleRegion();
-		cout << "here" << endl;
 	}
 
 	template <std::size_t N>
