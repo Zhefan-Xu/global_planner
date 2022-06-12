@@ -42,6 +42,7 @@ namespace globalPlanner{
 		bool visRRT_;
 		bool visPath_;
 	
+		bool ignoreUnknown_;
 
 	public:
 		std::thread RRTVisWorker_;
@@ -168,6 +169,12 @@ namespace globalPlanner{
 			cout << "[Global Planner INFO]: No Timeout Parameter. Use default value: 3.0s." << endl;
 		}
 
+		// ignore unknown voxel
+		if (not this->nh_.getParam("ignore_unknown", this->ignoreUnknown_)){
+			this->ignoreUnknown_ = false;
+			cout << "[Global Planner INFO]: No Ignore Unknown Parameter. Use default: false." << endl;
+		}
+
 
 		this->mapClient_ = this->nh_.serviceClient<octomap_msgs::GetOctomap>("/octomap_binary");
 		// this->updateMap();
@@ -287,7 +294,7 @@ namespace globalPlanner{
 		for (xID=0; xID<=xNum; ++xID){
 			for (yID=0; yID<=yNum; ++yID){
 				for (zID=0; zID<=zNum; ++zID){
-					if (this->checkCollisionPoint(octomap::point3d(xmin+xID*this->mapRes_, ymin+yID*this->mapRes_, zmin+zID*this->mapRes_), false)){
+					if (this->checkCollisionPoint(octomap::point3d(xmin+xID*this->mapRes_, ymin+yID*this->mapRes_, zmin+zID*this->mapRes_), this->ignoreUnknown_)){
 						return true;
 					}
 				}
