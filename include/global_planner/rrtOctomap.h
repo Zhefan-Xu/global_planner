@@ -71,6 +71,8 @@ namespace globalPlanner{
 		virtual void updateMap(); // update map use service
 		void mapCB(const octomap_msgs::Octomap &msg);
 		void updateSampleRegion();// helper function for update sample region
+		void updateEnvBox(const std::vector<double>& range);
+		void clearEnvBox();
 		
 		// collision checking function based on map and collision box: TRUE => Collision
 		virtual bool checkCollision(const KDTree::Point<N>& q);
@@ -104,6 +106,7 @@ namespace globalPlanner{
 
 
 		double getMapRes();
+		std::vector<double> getEnvBox();
 	};
 
 
@@ -270,6 +273,19 @@ namespace globalPlanner{
 		double ymax = std::min(this->envBox_[3], this->envLimit_[3]); this->sampleRegion_[3] = ymax;
 		double zmin = std::max(this->envBox_[4], this->envLimit_[4]); this->sampleRegion_[4] = zmin;
 		double zmax = std::min(this->envBox_[5], this->envLimit_[5]); this->sampleRegion_[5] = zmax;
+	}
+
+	template <std::size_t N>
+	void rrtOctomap<N>::updateEnvBox(const std::vector<double>& range){
+		this->envBox_ = range;
+	}
+
+	template <std::size_t N>
+	void rrtOctomap<N>::clearEnvBox(){
+		if (not this->nh_.getParam("env_box", this->envBox_)){
+			std::vector<double> defaultEnvBox {-100, 100, -100, 100, 0, 1.5};
+			cout << "[Global Planner INFO]: No Environment Box Parameter. Use default env box: [-100, 100, -100, 100, 0, 1.5]." << endl;
+		}
 	}
 
 	template <std::size_t N>
@@ -671,6 +687,11 @@ namespace globalPlanner{
 	template <std::size_t N>
 	double rrtOctomap<N>::getMapRes(){
 		return this->mapRes_;
+	}
+
+	template <std::size_t N>
+	std::vector<double> rrtOctomap<N>::getEnvBox(){
+		return this->envBox_;
 	}
 
 
