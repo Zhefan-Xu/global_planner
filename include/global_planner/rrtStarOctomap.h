@@ -174,6 +174,9 @@ namespace globalPlanner{
 
 	template <std::size_t N>
 	void rrtStarOctomap<N>::makePlan(std::vector<KDTree::Point<N>>& plan){
+		if (not this->notUpdateSampleRegion_){
+			this->updateSampleRegion();
+		}
 		if (this->visPath_){
 			this->pathVisVec_.clear();
 			this->pathVisMsg_.markers = this->pathVisVec_;

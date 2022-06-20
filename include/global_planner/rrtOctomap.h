@@ -43,6 +43,7 @@ namespace globalPlanner{
 		bool visPath_;
 	
 		bool ignoreUnknown_;
+		bool notUpdateSampleRegion_;
 
 	public:
 		std::thread RRTVisWorker_;
@@ -193,7 +194,8 @@ namespace globalPlanner{
 
 		// Visualization:
 		this->startVisModule();
-	
+		
+		this->notUpdateSampleRegion_ = false;
 	}
 
 	template <std::size_t N>
@@ -250,7 +252,7 @@ namespace globalPlanner{
 		this->map_->getMetricMax(max_x, max_y, max_z);
 		this->map_->getMetricMin(min_x, min_y, min_z);
 		this->envLimit_[0] = min_x; this->envLimit_[1] = max_x; this->envLimit_[2] = min_y; this->envLimit_[3] = max_y; this->envLimit_[4] = min_z; this->envLimit_[5] = max_z;
-		this->updateSampleRegion();
+		// this->updateSampleRegion();
 		cout << "[Global Planner INFO]: Map updated!" << endl;
 	}
 
@@ -262,7 +264,7 @@ namespace globalPlanner{
 		this->map_->getMetricMax(max_x, max_y, max_z);
 		this->map_->getMetricMin(min_x, min_y, min_z);
 		this->envLimit_[0] = min_x; this->envLimit_[1] = max_x; this->envLimit_[2] = min_y; this->envLimit_[3] = max_y; this->envLimit_[4] = min_z; this->envLimit_[5] = max_z;
-		this->updateSampleRegion();
+		// this->updateSampleRegion();
 	}
 
 	template <std::size_t N>
@@ -278,6 +280,7 @@ namespace globalPlanner{
 	template <std::size_t N>
 	void rrtOctomap<N>::updateEnvBox(const std::vector<double>& range){
 		this->envBox_ = range;
+		this->notUpdateSampleRegion_ = true;
 	}
 
 	template <std::size_t N>
@@ -286,6 +289,7 @@ namespace globalPlanner{
 			std::vector<double> defaultEnvBox {-100, 100, -100, 100, 0, 1.5};
 			cout << "[Global Planner INFO]: No Environment Box Parameter. Use default env box: [-100, 100, -100, 100, 0, 1.5]." << endl;
 		}
+		this->notUpdateSampleRegion_ = false;
 	}
 
 	template <std::size_t N>
@@ -415,6 +419,10 @@ namespace globalPlanner{
 
 	template <std::size_t N>
 	void rrtOctomap<N>::makePlan(std::vector<KDTree::Point<N>>& plan){
+		if (not this->notUpdateSampleRegion_){
+			this->updateSampleRegion();
+		}
+
 		if (this->visRRT_){
 			this->RRTVisvec_.clear();
 			this->RRTVisMsg_.markers = this->RRTVisvec_;
