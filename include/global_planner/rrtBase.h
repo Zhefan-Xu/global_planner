@@ -82,6 +82,7 @@ namespace globalPlanner{
 
 		// add the new edge to RRT: add to rrt 
 		void addEdge(const KDTree::Point<N>& qNear, const KDTree::Point<N>& qNew);
+		bool hasNoEdge(const KDTree::Point<N>& qNear, const KDTree::Point<N>& qNew);
 
 		// update start position:
 		void updateStart(const std::vector<double>& newStart);
@@ -195,7 +196,7 @@ namespace globalPlanner{
 	template <std::size_t N>
 	void rrtBase<N>::backTrace(const KDTree::Point<N>& qGoal, std::vector<KDTree::Point<N>>& plan){
 		KDTree::Point<N> ptr = qGoal;
-		while (ptr != this->emptyToken_){
+		while (ptr[0] != this->emptyToken_[0]){
 			plan.push_back(ptr);
 			ptr = this->parent_[ptr];
 		}
@@ -215,6 +216,11 @@ namespace globalPlanner{
 	template <std::size_t N>
 	void rrtBase<N>::addEdge(const KDTree::Point<N>& qNear, const KDTree::Point<N>& qNew){
 		this->parent_[qNew] = qNear;
+	}
+
+	template <std::size_t N>
+	bool rrtBase<N>::hasNoEdge(const KDTree::Point<N>& qNear, const KDTree::Point<N>& qNew){
+		return this->parent_[qNear] != qNew;
 	}
 
 	template <std::size_t N>

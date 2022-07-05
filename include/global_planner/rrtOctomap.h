@@ -43,6 +43,7 @@ namespace globalPlanner{
 		bool visPath_;
 	
 		bool ignoreUnknown_;
+		double maxShortcutThresh_;
 
 	public:
 		std::thread RRTVisWorker_;
@@ -176,6 +177,12 @@ namespace globalPlanner{
 		if (not this->nh_.getParam("ignore_unknown", this->ignoreUnknown_)){
 			this->ignoreUnknown_ = false;
 			cout << "[Global Planner INFO]: No Ignore Unknown Parameter. Use default: false." << endl;
+		}
+
+		// maximum shortcut threshold
+		if (not this->nh_.getParam("max_shortcut_dist", this->maxShortcutThresh_)){
+			this->maxShortcutThresh_ = 5.0;
+			cout << "[Global Planner INFO]: No Max Shortcut Distance Threshold Parameter. Use default: 5.0." << endl;
 		}
 
 
@@ -379,7 +386,7 @@ namespace globalPlanner{
 				break;
 			}
 			KDTree::Point<N> p1 = plan[ptr1]; KDTree::Point<N> p2 = plan[ptr2];
-			if (not checkCollisionLine(p1, p2)){
+			if (not checkCollisionLine(p1, p2) and KDTree:: Distance(p1, p2) <= this->maxShortcutThresh_){
 				// cout << "has collision" << endl;
 				if (ptr2 >= plan.size()-1){
 					planSc.push_back(p2);
@@ -463,7 +470,7 @@ namespace globalPlanner{
 			this->newConfig(qNear, qRand, qNew);
 
 			// 4. Add new config to vertex and edge:
-			if (not this->checkCollisionLine(qNew, qNear)){
+			if (this->hasNoEdge(qNear, qNew) and not this->checkCollisionLine(qNew, qNear)){ // no loop my parent is you and your parent is me
 				this->addVertex(qNew);
 				this->addEdge(qNear, qNew);
 				++sampleNum;

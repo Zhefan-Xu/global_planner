@@ -100,6 +100,19 @@ namespace globalPlanner{
 			cout << "[Global Planner INFO]: No Timeout Parameter. Use default value: 3.0s." << endl;
 		}
 
+		// ignore unknown voxel
+		if (not this->nh_.getParam("ignore_unknown", this->ignoreUnknown_)){
+			this->ignoreUnknown_ = false;
+			cout << "[Global Planner INFO]: No Ignore Unknown Parameter. Use default: false." << endl;
+		}
+
+		// maximum shortcut threshold
+		if (not this->nh_.getParam("max_shortcut_dist", this->maxShortcutThresh_)){
+			this->maxShortcutThresh_ = 5.0;
+			cout << "[Global Planner INFO]: No Max Shortcut Distance Threshold Parameter. Use default: 5.0." << endl;
+		}
+
+
 		// Neighborhood radius:
 		if (not this->nh_.getParam("neighborhood_radius", this->rNeighborhood_)){
 			this->rNeighborhood_ = 1.0;
@@ -111,6 +124,7 @@ namespace globalPlanner{
 			this->maxNeighbors_ = 10;
 			cout << "[Global Planner INFO]: No Max Number of Neighbors Paramter. Use default: 10." << endl;
 		}
+
 
 		this->visRRT_ = false;		
 
@@ -218,7 +232,7 @@ namespace globalPlanner{
 			this->newConfig(qNear, qRand, qNew);
 
 			// 4. Add new config to vertex and edge:
-			if (not this->checkCollisionLine(qNew, qNear)){
+			if (this->hasNoEdge(qNear, qNew) and not this->checkCollisionLine(qNew, qNear)){
 				// RRT* rewiring 1;
 				KDTree::Point<N> qBestParent = qNear;
 				double minDistance = this->getDistanceToStart(qNew, qNear);
