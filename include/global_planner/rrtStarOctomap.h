@@ -162,7 +162,7 @@ namespace globalPlanner{
 		this->map_->getMetricMax(max_x, max_y, max_z);
 		this->map_->getMetricMin(min_x, min_y, min_z);
 		this->envLimit_[0] = min_x; this->envLimit_[1] = max_x; this->envLimit_[2] = min_y; this->envLimit_[3] = max_y; this->envLimit_[4] = min_z; this->envLimit_[5] = max_z;
-		this->updateSampleRegion();
+		// this->updateSampleRegion();
 	}
 
 	template <std::size_t N>
@@ -188,6 +188,9 @@ namespace globalPlanner{
 
 	template <std::size_t N>
 	void rrtStarOctomap<N>::makePlan(std::vector<KDTree::Point<N>>& plan){
+		if (not this->notUpdateSampleRegion_){
+			this->updateSampleRegion();
+		}
 		if (this->visPath_){
 			this->pathVisVec_.clear();
 			this->pathVisMsg_.markers = this->pathVisVec_;
