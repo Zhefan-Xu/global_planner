@@ -85,6 +85,9 @@ namespace globalPlanner{
 
 		// shortcut path
 		void shortcutWaypointPaths(const std::vector<KDTree::Point<N>>& plan, std::vector<KDTree::Point<N>>& planSc);
+		void shortcutWaypointPathsRandom(const std::vector<KDTree::Point<N>>& plan, std::vector<KDTree::Point<N>>& planSc);
+		void randomShortcutOnce(std::vector<KDTree::Point<N>>& plan);
+		void sampleWaypoint(const std::vector<KDTree::Point<N>>& plan, KDTree::Point<N>& sample, int& idx);
 
 		// random sample in valid space (based on current map)
 		virtual void randomConfig(KDTree::Point<N>& qRand);
@@ -410,6 +413,71 @@ namespace globalPlanner{
 	}
 
 	template <std::size_t N>
+	void rrtOctomap<N>::shortcutWaypointPathsRandom(const std::vector<KDTree::Point<N>>& plan, std::vector<KDTree::Point<N>>& planSc){
+		planSc = plan;
+		double timeoutSC = 0.1;
+		ros::Time startTime = ros::Time::now();
+		while (ros::ok()){
+			ros::Time endTime = ros::Time::now();
+			if ((endTime - startTime).toSec() >= timeoutSC){
+				break;
+			}
+			this->randomShortcutOnce(planSc);
+		}
+	}
+
+
+	template <std::size_t N>
+	void rrtOctomap<N>::randomShortcutOnce(std::vector<KDTree::Point<N>>& plan){
+		KDTree::Point<N> p1, p2;
+		int idx1, idx2;
+		this->sampleWaypoint(plan, p1, idx1);
+		this->sampleWaypoint(plan, p2, idx2);
+
+		// if two points has no collision in between shorcut them
+		if (idx1 != idx2 and not this->checkCollisionLine(p1, p2)){
+			std::vector<KDTree::Point<N>> oldPlan = plan;
+			plan.clear();
+			for (int i=0; i<oldPlan.size(); ++i){
+				if (idx1 > idx2){
+					if (i <= idx2 or i >= idx1){
+						plan.push_back(oldPlan[i]);
+					}
+					// else if (i == idx2){
+					// 	plan.push_back(oldPlan[idx2]);
+					// 	plan.push_back(p2);
+					// 	plan.push_back(p1);
+					// }
+				}
+				else{
+					if (i <= idx1 or i >= idx2){
+						plan.push_back(oldPlan[i]);
+					}
+					// else if (i == idx1){
+					// 	plan.push_back(oldPlan[idx1]);
+					// 	plan.push_back(p1);
+					// 	plan.push_back(p2);
+					// }
+				}
+			}
+		}
+
+	}
+
+	template <std::size_t N>
+	void rrtOctomap<N>::sampleWaypoint(const std::vector<KDTree::Point<N>>& plan, KDTree::Point<N>& sample, int& idx){
+		idx = rand() % (plan.size());
+		// double ratio = randomNumber(0, 1);
+		KDTree::Point<N> p1 = plan[idx];
+		// KDTree::Point<N> p2 = plan[idx+1];
+		// sample = p1 * ratio + p2 * (1 - ratio);
+		sample = p1;
+	}
+
+
+
+
+	template <std::size_t N>
 	void rrtOctomap<N>::randomConfig(KDTree::Point<N>& qRand){
 		bool valid = false;
 		double x, y, z;
@@ -521,6 +589,10 @@ namespace globalPlanner{
 				cout << "[Global Planner INFO]: TIMEOUT!"<< "(>" << this->timeout_ << "s)" << ", Return closest path. Distance: " << nearestDistance << " m." << endl;
 			}
 		}
+		
+		
+		// this->shortcutWaypointPathsRandom(planRaw, plan);
+		// planRaw = plan; plan.clear();
 		this->shortcutWaypointPaths(planRaw, plan);
 
 		// visualization
