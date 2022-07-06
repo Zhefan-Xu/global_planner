@@ -220,6 +220,9 @@ namespace globalPlanner{
 
 	template <std::size_t N>
 	bool rrtBase<N>::hasNoEdge(const KDTree::Point<N>& qNear, const KDTree::Point<N>& qNew){
+		if (qNear == qNew){
+			return false;
+		}
 		return this->parent_[qNear] != qNew;
 	}
 

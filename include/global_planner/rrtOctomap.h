@@ -43,6 +43,7 @@ namespace globalPlanner{
 		bool visPath_;
 	
 		bool ignoreUnknown_;
+		bool notUpdateSampleRegion_;
 		double maxShortcutThresh_;
 
 	public:
@@ -200,7 +201,8 @@ namespace globalPlanner{
 
 		// Visualization:
 		this->startVisModule();
-	
+		
+		this->notUpdateSampleRegion_ = false;
 	}
 
 	template <std::size_t N>
@@ -285,6 +287,7 @@ namespace globalPlanner{
 	template <std::size_t N>
 	void rrtOctomap<N>::updateEnvBox(const std::vector<double>& range){
 		this->envBox_ = range;
+		this->notUpdateSampleRegion_ = true;
 	}
 
 	template <std::size_t N>
@@ -293,6 +296,7 @@ namespace globalPlanner{
 			std::vector<double> defaultEnvBox {-100, 100, -100, 100, 0, 1.5};
 			cout << "[Global Planner INFO]: No Environment Box Parameter. Use default env box: [-100, 100, -100, 100, 0, 1.5]." << endl;
 		}
+		this->notUpdateSampleRegion_ = false;
 	}
 
 	template <std::size_t N>
@@ -422,6 +426,10 @@ namespace globalPlanner{
 
 	template <std::size_t N>
 	void rrtOctomap<N>::makePlan(std::vector<KDTree::Point<N>>& plan){
+		if (not this->notUpdateSampleRegion_){
+			this->updateSampleRegion();
+		}
+		
 		if (this->visRRT_){
 			this->RRTVisvec_.clear();
 			this->RRTVisMsg_.markers = this->RRTVisvec_;
