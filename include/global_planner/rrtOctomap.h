@@ -120,7 +120,7 @@ namespace globalPlanner{
 	rrtOctomap<N>::rrtOctomap() : rrtBase<N>(){}
 
 	template <std::size_t N>
-	rrtOctomap<N>::rrtOctomap(const ros::NodeHandle& nh) : nh_(nh), rrtBase<N>(){
+	rrtOctomap<N>::rrtOctomap(const ros::NodeHandle& nh) : rrtBase<N>(), nh_(nh){
 		// load parameters:
 		// Map Resolution for Collisiong checking
 		if (not this->nh_.getParam("map_resolution", this->mapRes_)){
@@ -373,7 +373,7 @@ namespace globalPlanner{
 
 	template <std::size_t N>
 	void rrtOctomap<N>::shortcutWaypointPaths(const std::vector<KDTree::Point<N>>& plan, std::vector<KDTree::Point<N>>& planSc){
-		int ptr1 = 0; int ptr2 = 2;
+		size_t ptr1 = 0; size_t ptr2 = 2;
 		planSc.push_back(plan[ptr1]);
 
 		if (plan.size() == 1){
@@ -480,7 +480,6 @@ namespace globalPlanner{
 	template <std::size_t N>
 	void rrtOctomap<N>::randomConfig(KDTree::Point<N>& qRand){
 		bool valid = false;
-		double x, y, z;
 		octomap::point3d p;
 		while (not valid){
 			p.x() = randomNumber(this->sampleRegion_[0], this->sampleRegion_[1]);
@@ -699,7 +698,7 @@ namespace globalPlanner{
 		visualization_msgs::Marker line;
 		geometry_msgs::Point p1, p2;
 		std::vector<geometry_msgs::Point> lineVec;
-		for (int i=0; i < plan.size(); ++i){
+		for (size_t i=0; i < plan.size(); ++i){
 			KDTree::Point<N> currentPoint = plan[i];
 			if (i != plan.size() - 1){
 				KDTree::Point<N> nextPoint = plan[i+1];

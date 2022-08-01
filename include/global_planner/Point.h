@@ -117,7 +117,7 @@ namespace KDTree{
     template <std::size_t N>
     Point<N> operator+(const Point<N>& p1, const Point<N>& p2){
         Point<N> p_sum;
-        for (int i=0; i<N; ++i){
+        for (size_t i=0; i<N; ++i){
             p_sum[i] = p1[i] + p2[i];
         }
         return p_sum;
@@ -126,7 +126,7 @@ namespace KDTree{
     template <std::size_t N>
     Point<N> operator-(const Point<N>& p1, const Point<N>& p2){
         Point<N> p_sum;
-        for (int i=0; i<N; ++i){
+        for (size_t i=0; i<N; ++i){
             p_sum[i] = p1[i] - p2[i];
         }
         return p_sum;
@@ -135,7 +135,7 @@ namespace KDTree{
     template <std::size_t N>
     Point<N> operator*(const Point<N>& p1, double r){
         Point<N> p_result;
-        for (int i=0; i<N; ++i){
+        for (size_t i=0; i<N; ++i){
             p_result[i] = r * p1[i];
         }
         return p_result;
@@ -144,7 +144,7 @@ namespace KDTree{
     template <std::size_t N>
     Point<N> operator*(double r, const Point<N>& p1){
         Point<N> p_result;
-        for (int i=0; i<N; ++i){
+        for (size_t i=0; i<N; ++i){
             p_result[i] = r * p1[i];
         }
         return p_result;
@@ -155,7 +155,7 @@ namespace KDTree{
     template <std::size_t N>
     std::ostream &operator<<(std::ostream &os, Point<N> const &p){
         os << "(";
-        for (int i=0; i<N; ++i){
+        for (size_t i=0; i<N; ++i){
             os << p[i];
             if (i != N-1){
                 os << " ";
@@ -169,7 +169,7 @@ namespace KDTree{
         template <std::size_t N>
         std::size_t operator()(const Point<N>& p) const{
             double sum = 0.0;
-            for (int i=0; i<N; ++i){
+            for (size_t i=0; i<N; ++i){
                 sum += (p[i]/N) * (p[i]/N) * 1000000;
             }
             std::size_t hash = std::size_t(sum);
@@ -183,7 +183,7 @@ namespace KDTree{
     template <std::size_t N>
     std::vector<double> point2Vec(const Point<N>& p){
         std::vector<double> result;
-        for (int i=1; i<N; ++i){
+        for (size_t i=1; i<N; ++i){
             result.push_back(p[i]);
         }
         return result;
@@ -192,7 +192,7 @@ namespace KDTree{
     template <std::size_t N>
     Point<N> vec2Point(const std::vector<double>& vec){
         Point<N> result;
-        for (int i=0; i<N; ++i){
+        for (size_t i=0; i<N; ++i){
             result[i] = vec[i];
         }
         return result;

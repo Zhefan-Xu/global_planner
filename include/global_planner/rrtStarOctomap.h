@@ -50,7 +50,7 @@ namespace globalPlanner{
 	
 	// ============function definition===================
 	template <std::size_t N>
-	rrtStarOctomap<N>::rrtStarOctomap(const ros::NodeHandle& nh) : nh_(nh), rrtOctomap<N>(){
+	rrtStarOctomap<N>::rrtStarOctomap(const ros::NodeHandle& nh) : rrtOctomap<N>(), nh_(nh){
 		// Map Resolution for Collisiong checking
 		if (not this->nh_.getParam("map_resolution", this->mapRes_)){
 			this->mapRes_ = 0.2;
