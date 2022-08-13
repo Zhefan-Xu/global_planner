@@ -481,7 +481,7 @@ namespace globalPlanner{
 	void rrtOctomap<N>::randomConfig(KDTree::Point<N>& qRand){
 		bool valid = false;
 		octomap::point3d p;
-		while (not valid){
+		while (ros::ok() and not valid){
 			p.x() = randomNumber(this->sampleRegion_[0], this->sampleRegion_[1]);
 			p.y() = randomNumber(this->sampleRegion_[2], this->sampleRegion_[3]);
 			p.z() = randomNumber(this->sampleRegion_[4], this->sampleRegion_[5]);

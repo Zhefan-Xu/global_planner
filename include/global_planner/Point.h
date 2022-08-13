@@ -12,6 +12,7 @@
 #include <cmath>
 #include <algorithm>
 #include <vector>
+#include <Eigen/Eigen>
 
 namespace KDTree{
     template <std::size_t N>
@@ -195,6 +196,21 @@ namespace KDTree{
         for (size_t i=0; i<N; ++i){
             result[i] = vec[i];
         }
+        return result;
+    }
+
+    template <std::size_t N>
+    Eigen::Vector3d point2Eig(const Point<N>& p){
+        Eigen::Vector3d pE (p[0], p[1], p[2]);
+        return pE;
+    }
+
+    template <std::size_t N>
+    Point<N> eig2Point(const Eigen::Vector3d& pE){
+        Point<N> result;
+        result[0] = pE(0);
+        result[1] = pE(1);
+        result[2] = pE(2);
         return result;
     }
 

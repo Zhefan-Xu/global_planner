@@ -7,3 +7,4 @@
 
 #include <global_planner/rrtOctomap.h>
 #include <global_planner/rrtStarOctomap.h>
+#include <global_planner/rrtOccMap.h>

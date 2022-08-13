@@ -5,8 +5,11 @@
 */
 #ifndef RRTBASE_H
 #define RRTBASE_H
+#include <ros/ros.h>
 #include <global_planner/KDTree.h>
+#include <Eigen/Eigen>
 #include <random>
+#include <geometry_msgs/Pose.h>
 
 using std::cout; using std::endl;
 
@@ -86,11 +89,15 @@ namespace globalPlanner{
 
 		// update start position:
 		void updateStart(const std::vector<double>& newStart);
+		void updateStart(const Eigen::Vector3d& newStart);
 		void updateStart(const KDTree::Point<N>& newStart);
+		void updateStart(const geometry_msgs::Pose& newStart);
 
 		// update goal position:
 		void updateGoal(const std::vector<double>& newGoal);
+		void updateGoal(const Eigen::Vector3d& newGoal);
 		void updateGoal(const KDTree::Point<N>& newGoal);
+		void updateGoal(const geometry_msgs::Pose& newGoal);
 
 		void clearRRT();
 
@@ -231,6 +238,12 @@ namespace globalPlanner{
 		KDTree::Point<N> newStartp = KDTree::vec2Point<N>(newStart);
 		this->updateStart(newStartp);
 	}
+
+	template <std::size_t N>
+	void rrtBase<N>::updateStart(const Eigen::Vector3d& newStart){
+		KDTree::Point<N> newStartp = KDTree::eig2Point<N>(newStart);
+		this->updateStart(newStartp);
+	}
 	
 	template <std::size_t N>
 	void rrtBase<N>::updateStart(const KDTree::Point<N>& newStart){
@@ -242,10 +255,22 @@ namespace globalPlanner{
 		}
 	}
 
+	template <std::size_t N>
+	void rrtBase<N>::updateStart(const geometry_msgs::Pose& newStart){
+		KDTree::Point<N> newStartp;
+		newStartp[0] = newStart.position.x; newStartp[1] = newStart.position.y; newStartp[2] = newStart.position.z;
+		this->updateStart(newStartp);
+	}
 
 	template <std::size_t N>
 	void rrtBase<N>::updateGoal(const std::vector<double>& newGoal){
 		KDTree::Point<N> newGoalp = KDTree::vec2Point<N>(newGoal);
+		this->updateGoal(newGoalp);
+	}
+
+	template <std::size_t N>
+	void rrtBase<N>::updateGoal(const Eigen::Vector3d& newGoal){
+		KDTree::Point<N> newGoalp = KDTree::eig2Point<N>(newGoal);
 		this->updateGoal(newGoalp);
 	}
 	
@@ -257,6 +282,13 @@ namespace globalPlanner{
 		if (not this->ktree_.empty()){
 			this->clearRRT();
 		}
+	}
+
+	template <std::size_t N>
+	void rrtBase<N>::updateGoal(const geometry_msgs::Pose& newGoal){
+		KDTree::Point<N> newGoalp;
+		newGoalp[0] = newGoal.position.x; newGoalp[1] = newGoal.position.y; newGoalp[2] = newGoal.position.z;
+		this->updateGoal(newGoalp);
 	}
 
 	template <std::size_t N>
