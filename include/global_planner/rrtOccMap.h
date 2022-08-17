@@ -42,6 +42,8 @@ namespace globalPlanner{
 
 		void randomConfig(KDTree::Point<N>& qRand);
 		void shortcutWaypointPaths(const std::vector<KDTree::Point<N>>& plan, std::vector<KDTree::Point<N>>& planSc);
+		bool isCurrPathValid();
+		bool hasNewGoal(const geometry_msgs::Pose& goal);
 		void pathMsgConverter(const std::vector<KDTree::Point<N>>& pathTemp, nav_msgs::Path& path);
 		bool checkCollision(const KDTree::Point<N>& q);
 
@@ -200,7 +202,8 @@ namespace globalPlanner{
 			// 4. Add new config to vertex and edge
 			Eigen::Vector3d qNewEig = KDTree::point2Eig(qNew);
 			Eigen::Vector3d qNearEig = KDTree::point2Eig(qNear);
-			if (this->hasNoEdge(qNear, qNew) and not this->map_->isInflatedOccupiedLine(qNewEig, qNearEig)){
+			// if (this->hasNoEdge(qNear, qNew) and not this->map_->isInflatedOccupiedLine(qNewEig, qNearEig)){
+			if (this->hasNoEdge(qNear, qNew) and this->map_->isInflatedFreeLine(qNewEig, qNearEig)){
 				this->addVertex(qNew);
 				this->addEdge(qNear, qNew);
 				++sampleNum;
@@ -286,7 +289,9 @@ namespace globalPlanner{
 			KDTree::Point<N> p1 = plan[ptr1]; KDTree::Point<N> p2 = plan[ptr2];
 			Eigen::Vector3d pos1 = KDTree::point2Eig(p1);
 			Eigen::Vector3d pos2 = KDTree::point2Eig(p2);
-			if (not this->map_->isInflatedOccupiedLine(pos1, pos2) and KDTree:: Distance(p1, p2) <= this->maxShortcutThresh_){
+			// if (not this->map_->isInflatedOccupiedLine(pos1, pos2) and KDTree:: Distance(p1, p2) <= this->maxShortcutThresh_){
+			if (this->map_->isInflatedFreeLine(pos1, pos2) and KDTree:: Distance(p1, p2) <= this->maxShortcutThresh_){
+
 				if (ptr2 >= plan.size()-1){
 					planSc.push_back(p2);
 					break;
@@ -298,6 +303,35 @@ namespace globalPlanner{
 				ptr1 = ptr2-1;
 				ptr2 = ptr1+2;
 			}
+		}
+	}
+
+	template <std::size_t N>
+	bool rrtOccMap<N>::isCurrPathValid(){
+		if (this->currPlan_.size() == 0){
+			return false;
+		}
+		for (size_t i=0; i<this->currPlan_.size()-1; ++i){
+			KDTree::Point<N> currP = this->currPlan_[i];
+			KDTree::Point<N> nextP = this->currPlan_[i+1];
+			Eigen::Vector3d currPEig = KDTree::point2Eig(currP);
+			Eigen::Vector3d nextPEig = KDTree::point2Eig(nextP);
+			// if (this->map_->isInflatedOccupiedLine(currPEig, nextPEig)){
+			if (not this->map_->isInflatedFreeLine(currPEig, nextPEig)){
+				return false;
+			}
+		}
+		return true;
+	}
+
+	template <std::size_t N>
+	bool rrtOccMap<N>::hasNewGoal(const geometry_msgs::Pose& goal){
+		bool notNewGoal = (goal.position.x == this->goal_[0]) and (goal.position.y == this->goal_[1]) and (goal.position.z == this->goal_[2]);
+		if (notNewGoal){
+			return false;
+		}
+		else{
+			return true;
 		}
 	}
 

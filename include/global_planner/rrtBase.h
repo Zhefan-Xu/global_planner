@@ -10,18 +10,11 @@
 #include <Eigen/Eigen>
 #include <random>
 #include <geometry_msgs/Pose.h>
+#include <global_planner/utils.h>
 
 using std::cout; using std::endl;
 
 namespace globalPlanner{
-	std::random_device rd;
-	std::mt19937 mt(rd());
-	// Helper Function: Random Number
-	double randomNumber(double min, double max){
-		std::uniform_real_distribution<double> distribution(min, max);
-		return distribution(mt);
-	}
-
 	template <std::size_t N>
 	class rrtBase{
 	private:
