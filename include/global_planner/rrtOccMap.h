@@ -263,7 +263,8 @@ namespace globalPlanner{
 			p(0) = randomNumber(this->sampleRegion_[0], this->sampleRegion_[1]);
 			p(1) = randomNumber(this->sampleRegion_[2], this->sampleRegion_[3]);
 			p(2) = randomNumber(this->sampleRegion_[4], this->sampleRegion_[5]);
-			valid = not this->map_->isInflatedOccupied(p);
+			// valid = not this->map_->isInflatedOccupied(p);
+			valid = this->map_->isInflatedFree(p);
 		}
 		qRand[0] = p(0); qRand[1] = p(1); qRand[2] = p(2);
 	}
