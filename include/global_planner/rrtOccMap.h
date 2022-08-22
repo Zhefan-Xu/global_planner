@@ -160,6 +160,14 @@ namespace globalPlanner{
 
 	template <std::size_t N>
 	void rrtOccMap<N>::makePlan(std::vector<KDTree::Point<N>>& plan){
+		Eigen::Vector3d qGoal = KDTree::point2Eig(this->goal_);
+		if (this->map_->isUnknown(qGoal)){
+			plan.push_back(this->start_);
+			cout << "[Global Planner]: Goal is unknown. Please change your goal." << endl;
+			return;
+		}
+
+
 		ros::Time startTime = ros::Time::now();
 		ros::Time currTime;
 		bool findPath = false;
