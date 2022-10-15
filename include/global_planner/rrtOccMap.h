@@ -128,7 +128,7 @@ namespace globalPlanner{
 
 	template <std::size_t N>
 	void rrtOccMap<N>::registerPub(){
-		this->rrtVisPub_ = this->nh_.advertise<visualization_msgs::MarkerArray>("rrt/planned_path", 100);
+		this->rrtVisPub_ = this->nh_.template advertise<visualization_msgs::MarkerArray>("rrt/planned_path", 100);
 	}
 
 	template <std::size_t N>

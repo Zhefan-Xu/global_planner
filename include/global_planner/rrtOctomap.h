@@ -190,7 +190,7 @@ namespace globalPlanner{
 		}
 
 
-		this->mapClient_ = this->nh_.serviceClient<octomap_msgs::GetOctomap>("/octomap_binary");
+		this->mapClient_ = this->nh_.template serviceClient<octomap_msgs::GetOctomap>("/octomap_binary");
 		// this->updateMap();
 		this->mapSub_ = this->nh_.subscribe("/octomap_full", 1, &rrtOctomap::mapCB, this);
 
@@ -211,7 +211,7 @@ namespace globalPlanner{
 	template <std::size_t N>
 	rrtOctomap<N>::rrtOctomap(const ros::NodeHandle& nh, KDTree::Point<N> start, KDTree::Point<N> goal, std::vector<double> collisionBox, std::vector<double> envBox, double mapRes, double delQ, double dR, double connectGoalRatio, double timeout, bool visRRT, bool visPath)
 	: nh_(nh), mapRes_(mapRes), visRRT_(visRRT), visPath_(visPath), rrtBase<N>(start, goal, collisionBox, envBox, delQ, dR, connectGoalRatio){
-		this->mapClient_ = this->nh_.serviceClient<octomap_msgs::GetOctomap>("/octomap_binary");
+		this->mapClient_ = this->nh_.template serviceClient<octomap_msgs::GetOctomap>("/octomap_binary");
 		// this->updateMap();
 
 		// Visualization:
@@ -221,7 +221,7 @@ namespace globalPlanner{
 	template <std::size_t N>
 	rrtOctomap<N>::rrtOctomap(const ros::NodeHandle& nh, std::vector<double> start, std::vector<double> goal,  std::vector<double> collisionBox, std::vector<double> envBox, double mapRes, double delQ, double dR, double connectGoalRatio, double timeout, bool visRRT, bool visPath)
 	: nh_(nh), mapRes_(mapRes), visRRT_(visRRT), visPath_(visPath), rrtBase<N>(start, goal, collisionBox, envBox, delQ, dR, connectGoalRatio, timeout){
-		this->mapClient_ = this->nh_.serviceClient<octomap_msgs::GetOctomap>("/octomap_binary");
+		this->mapClient_ = this->nh_.template serviceClient<octomap_msgs::GetOctomap>("/octomap_binary");
 		// this->updateMap();
 
 		// Visualization:
@@ -231,7 +231,7 @@ namespace globalPlanner{
 	template <std::size_t N>
 	rrtOctomap<N>::rrtOctomap(const ros::NodeHandle& nh, std::vector<double> collisionBox, std::vector<double> envBox, double mapRes, double delQ, double dR, double connectGoalRatio, double timeout, bool visRRT, bool visPath)
 	:  nh_(nh), mapRes_(mapRes), visRRT_(visRRT), visPath_(visPath), rrtBase<N>(collisionBox, envBox, delQ, dR, connectGoalRatio, timeout){
-		this->mapClient_ = this->nh_.serviceClient<octomap_msgs::GetOctomap>("/octomap_binary");
+		this->mapClient_ = this->nh_.template serviceClient<octomap_msgs::GetOctomap>("/octomap_binary");
 		// this->updateMap();
 		
 		// Visualization:
@@ -611,12 +611,12 @@ namespace globalPlanner{
 	template <std::size_t N>
 	void rrtOctomap<N>::startVisModule(){
 		if (this->visRRT_){
-			this->RRTVisPub_ = this->nh_.advertise<visualization_msgs::MarkerArray>("/rrt_vis_array", 1);
+			this->RRTVisPub_ = this->nh_.template advertise<visualization_msgs::MarkerArray>("/rrt_vis_array", 1);
 			this->RRTVisWorker_ = std::thread(&rrtOctomap<N>::publishRRTVisMsg, this);
 		}
 
 		if (this->visPath_){
-			this->pathVisPub_ = this->nh_.advertise<visualization_msgs::MarkerArray>("/rrt_planned_path", 10);
+			this->pathVisPub_ = this->nh_.template advertise<visualization_msgs::MarkerArray>("/rrt_planned_path", 10);
 			this->pathVisWorker_ = std::thread(&rrtOctomap<N>::publishPathVisMsg, this);
 		}
 	}

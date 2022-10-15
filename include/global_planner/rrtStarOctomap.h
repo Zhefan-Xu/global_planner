@@ -128,7 +128,7 @@ namespace globalPlanner{
 
 		this->visRRT_ = false;		
 
-		this->mapClient_ = this->nh_.serviceClient<octomap_msgs::GetOctomap>("/octomap_binary");
+		this->mapClient_ = this->nh_.template serviceClient<octomap_msgs::GetOctomap>("/octomap_binary");
 		// this->updateMap();
 
 		this->mapSub_ = this->nh_.subscribe("/octomap_full", 1, &rrtStarOctomap::mapCB, this);
@@ -147,7 +147,7 @@ namespace globalPlanner{
 	template <std::size_t N>
 	rrtStarOctomap<N>::rrtStarOctomap(const ros::NodeHandle& nh, double rNeighborhood, double maxNeighbors, std::vector<double> collisionBox, std::vector<double> envBox, double mapRes, double delQ, double dR, double connectGoalRatio, double timeout, bool visPath)
 	: nh_(nh), rNeighborhood_(rNeighborhood), maxNeighbors_(maxNeighbors),  rrtOctomap<N>(collisionBox, envBox, mapRes, delQ, dR, connectGoalRatio, timeout, false, visPath){
-		this->mapClient_ = this->nh_.serviceClient<octomap_msgs::GetOctomap>("/octomap_binary");
+		this->mapClient_ = this->nh_.template serviceClient<octomap_msgs::GetOctomap>("/octomap_binary");
 		// this->updateMap();
 
 		// Visualization:
