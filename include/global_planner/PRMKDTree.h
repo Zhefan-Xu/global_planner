@@ -9,6 +9,7 @@
 #include <iostream>
 #include <memory>
 #include <Eigen/Eigen>
+#include <limits>
 
 using std::cout; using std::endl;
 namespace PRM{
@@ -29,13 +30,19 @@ namespace PRM{
 	private:
 		int size_;
 		std::shared_ptr<Node> root_;
+		double leastDistNN_ = std::numeric_limits<double>::infinity(); // temporarily save minimum distance for nearest neighbor search
 
 
 	public:
 		KDTree();
+		void clear();
 		std::shared_ptr<Node> getRoot();
 		int getSize();
 		void insert(std::shared_ptr<Node> n);
+		std::shared_ptr<Node> nearestNeighbor(std::shared_ptr<Node> n, 
+			                                  std::shared_ptr<Node> rootNode=NULL,
+			                                  std::shared_ptr<Node> bestNode=NULL,
+			                                  int depth=0);
 	};
 }
 
