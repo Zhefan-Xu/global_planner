@@ -1,0 +1,4 @@
+<launch>	
+	<rosparam file="$(find global_planner)/cfg/dep_param.yaml" />
+	<node pkg="global_planner" type="dep_node" name="dep_node" output="screen" />
+</launch>

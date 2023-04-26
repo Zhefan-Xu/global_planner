@@ -1,0 +1,2 @@
+odom_topic: "/CERLAB/quadcopter/odom"
+local_region_size: [5, 5, 5]
