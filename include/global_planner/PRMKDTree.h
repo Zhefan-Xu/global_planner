@@ -10,6 +10,8 @@
 #include <memory>
 #include <Eigen/Eigen>
 #include <limits>
+#include <unordered_set>
+
 
 using std::cout; using std::endl;
 namespace PRM{
@@ -18,6 +20,9 @@ namespace PRM{
 		std::shared_ptr<Node> left = NULL;
 		std::shared_ptr<Node> right = NULL;
 		std::shared_ptr<Node> treeParent = NULL;
+		
+		bool newNode = false;
+		std::unordered_set<std::shared_ptr<Node>> adjNodes;
 
 		Node (const Eigen::Vector3d& p){
 			this->pos = p;
