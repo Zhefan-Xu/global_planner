@@ -128,7 +128,8 @@ include_directories(
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/global_planner.cpp
 # )
-add_library(${PROJECT_NAME} src/globalPlannerLib.cpp)
+add_library(${PROJECT_NAME} src/globalPlannerLib.cpp
+                            include/${PROJECT_NAME}/PRMKDTree.cpp)
 
 
 ## Add cmake target dependencies of the library
@@ -141,6 +142,7 @@ add_library(${PROJECT_NAME} src/globalPlannerLib.cpp)
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/global_planner_node.cpp)
 add_executable(test_kdtree src/test/test_kdtree.cpp)
+add_executable(test_prm_kdtree src/test/test_prm_kdtree.cpp)
 add_executable(rrtInteractiveNode src/rrtInteractiveNode.cpp)
 add_executable(rrtStarInteractiveNode src/rrtStarInteractiveNode.cpp)
 
@@ -161,6 +163,7 @@ add_executable(rrtStarInteractiveNode src/rrtStarInteractiveNode.cpp)
 #   ${catkin_LIBRARIES}
 # )
 target_link_libraries(test_kdtree ${catkin_LIBRARIES})
+target_link_libraries(test_prm_kdtree ${catkin_LIBRARIES} ${PROJECT_NAME})
 target_link_libraries(rrtInteractiveNode ${catkin_LIBRARIES})
 target_link_libraries(rrtStarInteractiveNode ${catkin_LIBRARIES})
 

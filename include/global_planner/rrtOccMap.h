@@ -9,7 +9,7 @@
 #include <ros/ros.h>
 #include <global_planner/rrtBase.h>
 #include <Eigen/Eigen>
-#include <nav_msgs/Odometry.h>
+#include <nav_msgs/Path.h>
 #include <map_manager/occupancyMap.h>
 #include <visualization_msgs/MarkerArray.h>
 
