@@ -31,6 +31,9 @@ namespace globalPlanner{
 		Eigen::Vector3d globalRegionSize_;
 		Eigen::Vector3d localRegionSize_;
 
+		// data
+		Eigen::Vector3d pos_;
+
 	public:
 		DEP(const ros::NodeHandle& nh);
 
@@ -48,7 +51,8 @@ namespace globalPlanner{
 		void odomCB(const nav_msgs::OdometryConstPtr& odom);
 
 		// help function
-		std::shared_ptr<PRM::Node> randomConfigBBox();
+		std::shared_ptr<PRM::Node> randomConfigBBox(const Eigen::Vector3d& region);
+		double randomNumber(double min, double max);
 
 	};
 }

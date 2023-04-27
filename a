@@ -1,0 +1,464 @@
+[33mcommit a03204483d8c4d820e2ec7ab5dff193243f046b6[m[33m ([m[1;36mHEAD -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: Xiaoyang Zhan <xiaoyangzhan999@gmail.com>
+Date:   Wed Apr 26 17:41:58 2023 -0400
+
+    DEP framework
+
+[33mcommit 2b407b520d45056528cdbf19f945d4ebec390a39[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Wed Apr 26 15:28:58 2023 -0400
+
+    update
+
+[33mcommit b7367b146e48ead2e9e182bc520a6ba8d58ba656[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Wed Apr 26 01:36:47 2023 -0400
+
+    finish KDTree nearest neighbor search
+
+[33mcommit bcb8d56c3e9f7c05f3d5107c76a3cb72e4ed83f2[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Tue Apr 25 23:19:00 2023 -0400
+
+    start exploration planner implemetation, start with kdtree
+
+[33mcommit b8d10373bae2768d51bb3c5a275603218322864a[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Fri Mar 10 21:25:41 2023 -0500
+
+    fix header issue
+
+[33mcommit 353979b29075aa5ef863ac22064e27f01ec0ae7a[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Sun Aug 21 23:35:54 2022 -0400
+
+    update
+
+[33mcommit d4d290489506de2b90faa32c47bb178fa85c8186[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Sun Aug 21 00:41:02 2022 -0400
+
+    fix bug
+
+[33mcommit 96047788510d7edcbb82f9a5a0a0e21fb1525cf0[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Wed Aug 17 00:49:30 2022 -0400
+
+    update
+
+[33mcommit e7805f16ad6177f09cd75a4279721aaf2b4c2258[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Sat Aug 13 14:53:21 2022 -0400
+
+    rrtOccMap
+
+[33mcommit aaa44de63f2769989e2e24b9549e0647144729f0[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Sun Jul 31 20:26:27 2022 -0400
+
+    optimize code
+
+[33mcommit 5c2a2076b1f5217db94278f77b8c8bd16e0b9dea[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Wed Jul 6 02:01:18 2022 -0400
+
+    update
+
+[33mcommit 8228180ab2c6430e68c6abbd2b91e3ef09b3eaa5[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Tue Jul 5 20:43:29 2022 -0400
+
+    fix issue backtrace
+
+[33mcommit 5b44cf21cdf46d120adc9bafbf2151dcde92bbb7[m
+Merge: 1a7263b 594fb6c
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Tue Jul 5 19:56:15 2022 -0400
+
+    solve backtrace issue
+
+[33mcommit 1a7263b70d8b53bdebfa09a07c2bb0abf28472e9[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Tue Jul 5 19:26:53 2022 -0400
+
+    solve backtrace issue
+
+[33mcommit 594fb6c6d6a2529951f615163d162fced2b1e116[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Mon Jun 20 14:02:52 2022 -0400
+
+    udpate
+
+[33mcommit 7e1a91896cab939a67bafcb7eed6216c6a8e917b[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Mon Jun 13 10:50:53 2022 -0400
+
+    update
+
+[33mcommit b7a0bfd0504b757f1eada65456d935dfb68c03c7[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Sun Jun 12 06:25:01 2022 -0400
+
+    ignore unknown
+
+[33mcommit 515a8063bc456329006d13ed218db8d9d0b4b4c1[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Mon Jun 6 17:15:14 2022 -0400
+
+    update
+
+[33mcommit 0f2c86ee14976cb2d916744bbf89d085e7c6fbf7[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Wed Jun 1 14:05:23 2022 -0400
+
+    update
+
+[33mcommit 4c2392287a2975c7b1164a6014114ca1bd5fbf4a[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Mon May 30 10:45:05 2022 -0400
+
+    fdebug shortcut
+
+[33mcommit c523f18f583516915f13e752a8b8c59938a37b73[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Mon May 30 23:22:28 2022 -0400
+
+    change map update
+
+[33mcommit 95888f6d96665a32c4572d15e2d25bdae6062d36[m
+Author: zhefan <zhefanx@andrew.cmu.edu>
+Date:   Thu Mar 10 10:18:55 2022 -0500
+
+    typo
+
+[33mcommit 1dbe969c31578688f6aff70837b9bee59b471c46[m
+Author: zhefan <zhefanx@andrew.cmu.edu>
+Date:   Mon Feb 14 20:22:13 2022 -0500
+
+    fix issue
+
+[33mcommit ac4fe66a77998c38a6292b9c562ce0bb2ae9a545[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Wed Feb 9 18:36:29 2022 -0500
+
+    start goal vis
+
+[33mcommit b3fde3715a5d0b8febdbfd3c1e41660af631b5ed[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Wed Feb 9 18:00:50 2022 -0500
+
+    rosparam clean
+
+[33mcommit 0aa1a0c574209938b3dff5fd5beac44c2933ddc9[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Thu Feb 3 22:34:28 2022 -0500
+
+    collisionChecking: ignore unknown
+
+[33mcommit 91258ead57c2fcfa6601f9088f9b12107c3b58dc[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Mon Jan 31 20:45:31 2022 -0500
+
+    clean
+
+[33mcommit 15a5733825478b6a12242f610e12b48293afece1[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Fri Jan 28 14:09:05 2022 -0500
+
+    fix waypoint order
+
+[33mcommit f43dbcc1413d1ad756c0bb58e4f6caf533756e50[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Sun Jan 23 18:59:29 2022 -0500
+
+    fix issue
+
+[33mcommit 4ed561f57312b0b7f5052ba06201912586220fab[m
+Author: Zhefan Xu <55560905+Zhefan-Xu@users.noreply.github.com>
+Date:   Sat Jan 22 18:08:07 2022 -0500
+
+    Update README.md
+
+[33mcommit 0ae8c02dfac428e6ddbaf6653513ef381d8a0a43[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Sat Jan 22 18:05:56 2022 -0500
+
+    rrt*
+
+[33mcommit 59a1eb881e6edf49b0a81760d7085312b2b71a90[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Sat Jan 22 12:44:33 2022 -0500
+
+    ns
+
+[33mcommit 652a36bd364aa2944e13cb2d9972185ee47d729d[m
+Author: Zhefan Xu <55560905+Zhefan-Xu@users.noreply.github.com>
+Date:   Sat Jan 22 11:56:21 2022 -0500
+
+    Update README.md
+
+[33mcommit f645eba717246422922f76212a5b1a9acd3130cc[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Sat Jan 22 11:55:43 2022 -0500
+
+    map
+
+[33mcommit 575540cd89a9d39a122d1ee11010b14b267792e8[m
+Author: Zhefan Xu <55560905+Zhefan-Xu@users.noreply.github.com>
+Date:   Fri Jan 21 22:06:00 2022 -0500
+
+    Update README.md
+
+[33mcommit e69e8f911a29a2299dd7805216d5e63e65652cbd[m
+Author: Zhefan Xu <55560905+Zhefan-Xu@users.noreply.github.com>
+Date:   Fri Jan 21 22:01:33 2022 -0500
+
+    Update README.md
+
+[33mcommit dd5f28f316b2af561bbbe20ec0e4e888d7c91e59[m
+Author: Zhefan Xu <55560905+Zhefan-Xu@users.noreply.github.com>
+Date:   Fri Jan 21 21:58:51 2022 -0500
+
+    Update README.md
+
+[33mcommit d22efe4eea428051ed31264dfbd617b1a786d89d[m
+Author: Zhefan Xu <55560905+Zhefan-Xu@users.noreply.github.com>
+Date:   Fri Jan 21 21:58:41 2022 -0500
+
+    Update README.md
+
+[33mcommit 2d91ea6b5c114b16111754efc6bd18a19c5d0599[m
+Author: Zhefan Xu <55560905+Zhefan-Xu@users.noreply.github.com>
+Date:   Fri Jan 21 21:58:23 2022 -0500
+
+    Update README.md
+
+[33mcommit a5e372118d5129a9f5765376ab08bec209348f0f[m
+Author: Zhefan Xu <55560905+Zhefan-Xu@users.noreply.github.com>
+Date:   Fri Jan 21 21:57:41 2022 -0500
+
+    Update README.md
+
+[33mcommit fdcb724c80c7397e19bfb1c8744905149e2c2a7d[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Fri Jan 21 21:39:30 2022 -0500
+
+    stable
+
+[33mcommit 67323842b74dff0ddfafb12e76f7389470a83133[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Fri Jan 21 19:54:43 2022 -0500
+
+    interactive
+
+[33mcommit 722a4bf5576948c8ade25b46139def7c48831f8f[m
+Author: Zhefan Xu <55560905+Zhefan-Xu@users.noreply.github.com>
+Date:   Thu Jan 20 22:10:13 2022 -0500
+
+    Update README.md
+
+[33mcommit 0199eed830e5d5581083c19e2d15db6c99f36803[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Wed Jan 19 13:31:07 2022 -0500
+
+    fix vis issue
+
+[33mcommit 2b386ed2864de106cbbfe04404ca0f201f737fc5[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Wed Jan 19 03:27:01 2022 -0500
+
+    visualization
+
+[33mcommit 225cb5a51b71d974c078107c3ba5227508710d32[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Wed Jan 19 00:40:44 2022 -0500
+
+    nearestPath
+
+[33mcommit bcb25a761eac84314559a7d770f6edba7b7a1cf0[m
+Author: Zhefan Xu <55560905+Zhefan-Xu@users.noreply.github.com>
+Date:   Wed Jan 19 00:39:21 2022 -0500
+
+    Update README.md
+
+[33mcommit f1128911b3e07cc8f3817ef7bd97db2b3963e0b9[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Tue Jan 18 23:21:37 2022 -0500
+
+    map and rviz
+
+[33mcommit 9496c4e3eeeb04bb97d4a1500760726a2dae29b3[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Mon Jan 17 18:25:17 2022 -0500
+
+    rrt
+
+[33mcommit ee5c9cadc326cff9f355ae809c24ce0504657a4b[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Sun Jan 16 00:50:39 2022 -0500
+
+    basic function
+
+[33mcommit 9bceb5127a1c1567fd7bdbeff9d0444840288381[m
+Author: Zhefan-Xu <55560905+Zhefan-Xu@users.noreply.github.com>
+Date:   Sun Jan 16 00:50:13 2022 -0500
+
+    Update README.md
+
+[33mcommit dbb7c7d51edaeac986d987e51bba32a3e2d20e63[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Sat Jan 15 21:38:58 2022 -0500
+
+    sample
+
+[33mcommit 0e8fcb1d6afd06e8af0d8b1c72b56a3065b5eb9b[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Fri Jan 14 23:38:42 2022 -0500
+
+    update map
+
+[33mcommit 1702120c532e7c80c44fa5383cefca170d44b2d7[m
+Author: Zhefan-Xu <55560905+Zhefan-Xu@users.noreply.github.com>
+Date:   Fri Jan 14 23:37:59 2022 -0500
+
+    Update README.md
+
+[33mcommit 1f224564ec5f463c8f91dd64fe108fc6601d7d2e[m
+Author: Zhefan-Xu <55560905+Zhefan-Xu@users.noreply.github.com>
+Date:   Thu Jan 13 22:31:29 2022 -0500
+
+    Update README.md
+
+[33mcommit 160a06f910e52ca8e3c9e76b4db2cc2b545988f5[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Wed Jan 12 23:42:06 2022 -0500
+
+    fix cmake problem
+
+[33mcommit 4137655edef248cabdba3ee2a32071df776aa53e[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Wed Jan 12 22:40:33 2022 -0500
+
+    err cmake
+
+[33mcommit 77631b55417ab79c98136175fd4dfc8882227d01[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Tue Jan 11 18:21:55 2022 -0500
+
+    rrt octomap
+
+[33mcommit f319fc7dede606261f3b37a4584e3a0ccbdb975b[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Mon Jan 10 20:16:42 2022 -0500
+
+    abstract class
+
+[33mcommit 07919d579e2076a2dc8a3292aaf4f58efc7752b5[m
+Author: Zhefan-Xu <55560905+Zhefan-Xu@users.noreply.github.com>
+Date:   Mon Jan 10 20:16:06 2022 -0500
+
+    Update README.md
+
+[33mcommit 87bd9cfa300ed87d0daa74ac234e4ae2f855379e[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Sun Jan 9 22:47:56 2022 -0500
+
+    implemetation
+
+[33mcommit 1cbd730d2ec390930ce5ff70c42f719a774b0293[m
+Author: Zhefan-Xu <55560905+Zhefan-Xu@users.noreply.github.com>
+Date:   Sun Jan 9 22:47:10 2022 -0500
+
+    Update README.md
+
+[33mcommit 68da68854c60a211538f7473cbdf755480a09e68[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Sun Jan 9 17:44:06 2022 -0500
+
+    virtual class
+
+[33mcommit c619f94d2efc05e333412845e4703417f9a3b85f[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Sat Jan 8 01:33:17 2022 -0500
+
+    rrt base
+
+[33mcommit 5651c5491d97c77d01be885e0c4beb4e19146bd2[m
+Author: Zhefan-Xu <55560905+Zhefan-Xu@users.noreply.github.com>
+Date:   Sat Jan 8 01:32:28 2022 -0500
+
+    Update README.md
+
+[33mcommit 626d3d40e9c52ea89be401548928ad49c31cee3e[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Sat Jan 8 00:14:26 2022 -0500
+
+    bounded range search
+
+[33mcommit e671ea507659a38308d7eba0a957543c76e5731c[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Fri Jan 7 23:51:07 2022 -0500
+
+    namespace
+
+[33mcommit cc0acfc4558c37f40bf1a98c831e17b3baee546a[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Fri Jan 7 23:47:08 2022 -0500
+
+    namespace
+
+[33mcommit 8e300c1d25927553b8c446eff2d182c5afbbf32d[m
+Merge: 12aea7f 8d5a819
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Thu Jan 6 22:22:45 2022 -0500
+
+    Merge branch 'main' of https://github.com/Zhefan-Xu/global_planner into main
+
+[33mcommit 12aea7ffb239a8883390715435601baa1b8ee07b[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Thu Jan 6 22:22:21 2022 -0500
+
+    kdtree search
+
+[33mcommit 8d5a819c844ad7dc77d1448cb658ede562715106[m
+Author: Zhefan-Xu <55560905+Zhefan-Xu@users.noreply.github.com>
+Date:   Thu Jan 6 22:21:49 2022 -0500
+
+    Update README.md
+
+[33mcommit f176a784bfa068caac1472519cf9502c26d8faba[m
+Merge: 72c4628 61039d0
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Wed Jan 5 23:47:03 2022 -0500
+
+    Merge branch 'main' of https://github.com/Zhefan-Xu/global_planner into main
+
+[33mcommit 72c462819c74b672e991a6059ba3ffa2ae4d1324[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Wed Jan 5 23:46:35 2022 -0500
+
+    initial kdtree
+
+[33mcommit 61039d0f8886eee93b76f4a79a24dcbdeb7a5671[m
+Author: Zhefan-Xu <55560905+Zhefan-Xu@users.noreply.github.com>
+Date:   Tue Jan 4 23:11:11 2022 -0500
+
+    Update README.md
+
+[33mcommit 26bd7e26ce32a8b30021dfc6ab0702376b81c543[m
+Author: Zhefan-Xu <55560905+Zhefan-Xu@users.noreply.github.com>
+Date:   Mon Jan 3 22:18:38 2022 -0500
+
+    Update README.md
+
+[33mcommit d5a1632f9455bc4b7b63e2d024b685eb89f91762[m
+Author: Zhefan-Xu <55560905+Zhefan-Xu@users.noreply.github.com>
+Date:   Mon Jan 3 21:26:37 2022 -0500
+
+    Update README.md
+
+[33mcommit d1fdda98abdc33ad704b33ca876b64dc5160c4f7[m
+Author: Zhefan-Xu <zhefanx@andrew.cmu.edu>
+Date:   Sun Jan 2 20:13:01 2022 -0500
+
+    first commit
