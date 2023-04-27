@@ -48,7 +48,7 @@ namespace globalPlanner{
 		void odomCB(const nav_msgs::OdometryConstPtr& odom);
 
 		// help function
-		std::shared_ptr<Node> randomConfigBBox();
+		std::shared_ptr<PRM::Node> randomConfigBBox();
 
 	};
 }
