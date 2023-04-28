@@ -30,17 +30,19 @@ namespace globalPlanner{
 		else{
 			cout << this->hint_ << ": Odom topic: " << this->odomTopic_ << endl;
 		}
-		std::vector<double>local_size;	
-		if (not this->nh_.getParam(this->ns_ + "/local_region_size", local_size)){
-			this->localRegionSize_[0] = 1;
-			this->localRegionSize_[1] = 1;
-			this->localRegionSize_[2] = 1;
+
+		// local sample region size
+		std::vector<double> localRegionSizeTemp;	
+		if (not this->nh_.getParam(this->ns_ + "/local_region_size", localRegionSizeTemp)){
+			this->localRegionSize_(0) = 1.0;
+			this->localRegionSize_(1) = 1.0;
+			this->localRegionSize_(2) = 1.0;
 			cout << this->hint_ << ": No local region size param. Use default: [1 1 1]" <<endl;
 		}
 		else{
-			this->localRegionSize_[0] = local_size[0];
-			this->localRegionSize_[1] = local_size[1];
-			this->localRegionSize_[2] = local_size[2];
+			this->localRegionSize_(0) = localRegionSizeTemp[0];
+			this->localRegionSize_(1) = localRegionSizeTemp[1];
+			this->localRegionSize_(2) = localRegionSizeTemp[2];
 			cout << this->hint_ << ": Local Region Size: " << this->localRegionSize_[0] << this->localRegionSize_[1]<< this->localRegionSize_[2]<< endl;
 		}
 	}
@@ -50,11 +52,21 @@ namespace globalPlanner{
 		this->roadmap_.reset(new PRM::KDTree ());
 	}
 
+	void DEP::registerPub(){
+		// roadmap visualization publisher
+		this->roadmapPub_ = this->nh_.advertise<visualization_msgs::MarkerArray>("/dep/roadmap", 10);
+	}
+
 	void DEP::registerCallback(){
+		// odom subscriber
 		this->odomSub_ = this->nh_.subscribe(this->odomTopic_, 1000, &DEP::odomCB, this);
+	
+		// visualization timer
+		this->visTimer_ = this->nh_.createTimer(ros::Duration(0.05), &DEP::visCB, this);
 	}
 
 	void DEP::makePlan(){
+		if (not this->odomReceived_) return;
 		this->buildRoadMap();
 
 		this->getBestViewCandidates();
@@ -67,44 +79,37 @@ namespace globalPlanner{
 		//std::vector<PRM::Node*> new_nodes;
 		// double threshold = 500; // HardCode threshold
 		bool saturate = false;
-		bool region_saturate = false;
-		int count_sample = 0;
-		int sample_thresh = 50;
-		double distance_thresh = 0.8;
-		while (not saturate){
+		bool regionSaturate = false;
+		int countSample = 0;
+		int sampleThresh = 50;
+		double distThresh = 0.8;
+		while (ros::ok() and not saturate){
 			std::shared_ptr<PRM::Node> n;
-			double distance_to_nn = 0;
-			// int r = (int) randomNumber(1,10);
-			// cout << r << endl;
-			if (region_saturate){
-				
-				int count_failure = 0;
+			
+			if (regionSaturate){
+				int countFailure = 0;
 				// Generate new node
-				while (true){
-					if (count_failure > sample_thresh){
+				while (ros::ok() and true){
+					if (countFailure > sampleThresh){
 						saturate = true;
 						break;
 					}
 					n = this->randomConfigBBox(this->localRegionSize_);
 					// Check how close new node is other nodes
 					shared_ptr<PRM::Node> nn = this->roadmap_->nearestNeighbor(n);
-					distance_to_nn = (n->pos - nn->pos).norm();
-					if (distance_to_nn < distance_thresh){
-						++count_failure;
+					double distToNN = (n->pos - nn->pos).norm();
+					if (distToNN < distThresh){
+						++countFailure;
 					}
 					else{
 						this->roadmap_->insert(n);
-						++count_sample;
+						this->prmNodeVec_.push_back(n);
+						++countSample;
 						break;
 					}
 				}
 			}
 		}
-	}
-
-
-	
-	
 
 
 		// global sample (TODO)
@@ -114,6 +119,7 @@ namespace globalPlanner{
 
 
 		// information gain update
+	}	 
 
 	void DEP::getBestViewCandidates(){
 
@@ -125,32 +131,66 @@ namespace globalPlanner{
 
 	void DEP::odomCB(const nav_msgs::OdometryConstPtr& odom){
 		this->odom_ = *odom;
-		this->pos_ = Eigen::Vector3d (this->odom_.pose.pose.position.x, this->odom_.pose.pose.position.y, this->odom_.pose.pose.position.z);
+		this->position_ = Eigen::Vector3d (this->odom_.pose.pose.position.x, this->odom_.pose.pose.position.y, this->odom_.pose.pose.position.z);
+		this->currYaw_ = globalPlanner::rpy_from_quaternion(this->odom_.pose.pose.orientation);
+		this->odomReceived_ = true;
 	}
-	//help fucntions
-	std::shared_ptr<PRM::Node> DEP::randomConfigBBox(const Eigen::Vector3d& region){
-		Eigen::Vector3d min_region, max_region;
 
-		min_region = this->pos_ - 0.5*(region);
-		max_region = this->pos_ + 0.5*(region);
+	void DEP::visCB(const ros::TimerEvent&){
+		if (this->prmNodeVec_.size() != 0){
+			this->publishRoadmap();
+		}
+	}
+
+	void DEP::publishRoadmap(){
+		visualization_msgs::MarkerArray roadmapMarkers;
+		int countPointNum = 0;
+		for (size_t i=0; i<this->prmNodeVec_.size(); ++i){
+			std::shared_ptr<PRM::Node> n = this->prmNodeVec_[i];
+
+			// Node point
+			visualization_msgs::Marker point;
+			point.header.frame_id = "map";
+			point.header.stamp = ros::Time::now();
+			point.ns = "prm_point";
+			point.id = countPointNum;
+			point.type = visualization_msgs::Marker::SPHERE;
+			point.action = visualization_msgs::Marker::ADD;
+			point.pose.position.x = n->pos(0);
+			point.pose.position.y = n->pos(1);
+			point.pose.position.z = n->pos(2);
+			point.lifetime = ros::Duration(0.1);
+			point.scale.x = 0.2;
+			point.scale.y = 0.2;
+			point.scale.z = 0.2;
+			point.color.a = 1.0;
+			point.color.r = 1.0;
+			point.color.g = 0.0;
+			point.color.b = 0.0;
+			++countPointNum;
+			roadmapMarkers.markers.push_back(point);
+		}
+		this->roadmapPub_.publish(roadmapMarkers);
+	}
+
+
+
+	// TODO: add map range
+	std::shared_ptr<PRM::Node> DEP::randomConfigBBox(const Eigen::Vector3d& region){
+		Eigen::Vector3d minRegion, maxRegion;
+
+		minRegion = this->position_ - 0.5 * region;
+		maxRegion = this->position_ + 0.5 * region;
 		bool valid = false;
 		Eigen::Vector3d p;
-
 		while (valid == false){	
-			p[0] = randomNumber(min_region[0], max_region[0]);
-			p[1] = randomNumber(min_region[1], max_region[1]);
-			p[2] = randomNumber(min_region[2], max_region[2]);
+			p(0) = globalPlanner::randomNumber(minRegion(0), maxRegion(0));
+			p(1) = globalPlanner::randomNumber(minRegion(1), maxRegion(1));
+			p(2) = globalPlanner::randomNumber(minRegion(2), maxRegion(2));
 			valid = not this->map_->isInflatedOccupied(p) and not this->map_->isUnknown(p);
 		}
 
-		std::shared_ptr<PRM::Node> new_node (new PRM::Node(p));
-
-		return new_node;
-	}
-	std::random_device rd;
-	std::mt19937 mt(rd());	
-	double DEP::randomNumber(double min, double max){
-		std::uniform_real_distribution<double> distribution(min, max);
-		return distribution(mt);
+		std::shared_ptr<PRM::Node> newNode (new PRM::Node(p));
+		return newNode;
 	}
 }
