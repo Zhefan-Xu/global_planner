@@ -45,6 +45,37 @@ namespace globalPlanner{
 			this->localRegionSize_(2) = localRegionSizeTemp[2];
 			cout << this->hint_ << ": Local Region Size: " << this->localRegionSize_[0] << this->localRegionSize_[1]<< this->localRegionSize_[2]<< endl;
 		}
+		// global sample region size
+		std::vector<double> globalRegionSizeTemp;	
+		if (not this->nh_.getParam(this->ns_ + "/global_region_size", globalRegionSizeTemp)){
+			this->globalRegionSize_(0) = 5.0;
+			this->globalRegionSize_(1) = 5.0;
+			this->globalRegionSize_(2) = 5.0;
+			cout << this->hint_ << ": No global region size param. Use default: [5 5 5]" <<endl;
+		}
+		else{
+			this->globalRegionSize_(0) = globalRegionSizeTemp[0];
+			this->globalRegionSize_(1) = globalRegionSizeTemp[1];
+			this->globalRegionSize_(2) = globalRegionSizeTemp[2];
+			cout << this->hint_ << ": Global Region Size: " << this->globalRegionSize_[0] << this->globalRegionSize_[1]<< this->globalRegionSize_[2]<< endl;
+		}
+		
+		// Sample Threshold Value
+		if (not this->nh_.getParam(this->ns_ + "/sampleThresh", this->sampleThresh_)){
+			this->sampleThresh_ = 50;
+			cout << this->hint_ << ": No sample thresh param. Use default: 50" << endl;
+		}
+		else{
+			cout << this->hint_ << ": Sample Thresh: " << this->sampleThresh_ << endl;
+		}
+		if (not this->nh_.getParam(this->ns_ + "/distThresh", this->distThresh_)){
+			this->distThresh_ = 0.8;
+			cout << this->hint_ << ": No distance thresh param. Use default: 50" << endl;
+		}
+		else{
+			cout << this->hint_ << ": Distance Thresh: " << this->distThresh_ << endl;
+		}
+
 	}
 
 	void DEP::initModules(){
@@ -81,25 +112,23 @@ namespace globalPlanner{
 		bool saturate = false;
 		bool regionSaturate = false;
 		int countSample = 0;
-		int sampleThresh = 50;
-		double distThresh = 0.8;
 		while (ros::ok() and not saturate){
 			std::shared_ptr<PRM::Node> n;
 			
 			if (regionSaturate){
-				int countFailure = 0;
+				int countFailureGlobal = 0;
 				// Generate new node
 				while (ros::ok() and true){
-					if (countFailure > sampleThresh){
+					if (countFailureGlobal > this->sampleThresh_){
 						saturate = true;
 						break;
 					}
-					n = this->randomConfigBBox(this->localRegionSize_);
+					n = this->randomConfigBBox(this->globalRegionSize_);
 					// Check how close new node is other nodes
 					shared_ptr<PRM::Node> nn = this->roadmap_->nearestNeighbor(n);
 					double distToNN = (n->pos - nn->pos).norm();
-					if (distToNN < distThresh){
-						++countFailure;
+					if (distToNN < this->distThresh_){
+						++countFailureGlobal;
 					}
 					else{
 						this->roadmap_->insert(n);
@@ -109,11 +138,34 @@ namespace globalPlanner{
 					}
 				}
 			}
+			else{
+				if (true){
+					int countFailureLocal = 0;
+					// Generate new node
+					while (ros::ok() and true){
+						if (countFailureLocal > this->sampleThresh_){
+							regionSaturate = true;
+							break;
+						}
+						n = this->randomConfigBBox(this->localRegionSize_);
+						// Check how close new node is other nodes
+						shared_ptr<PRM::Node> nn = this->roadmap_->nearestNeighbor(n);
+						double distToNN = (n->pos - nn->pos).norm();
+						if (distToNN < this->distThresh_){
+							++countFailure;
+						}
+						else{
+							this->roadmap_->insert(n);
+							this->prmNodeVec_.push_back(n);
+							++countSample;
+							break;
+						}
+					}
+				}
+			}
 		}
-
-
-		// global sample (TODO)
-
+		cout << "newly added: " << count_sample << " samples" << endl;
+		
 
 		// node connection
 

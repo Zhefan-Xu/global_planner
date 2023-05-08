@@ -33,6 +33,8 @@ namespace globalPlanner{
 		std::string odomTopic_;
 		Eigen::Vector3d globalRegionSize_;
 		Eigen::Vector3d localRegionSize_;
+		int sampleThresh_;
+		double distThresh_;
 
 		// data
 		bool odomReceived_ = false;
