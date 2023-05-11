@@ -134,4 +134,27 @@ namespace PRM{
 		}
 		return bestNode;
 	}
+	// Returns the k-nearest neighbor in ascending order
+	std::vector<std::shared_ptr<Node>> KDTree::kNearestNeighbor(std::shared_ptr<Node> n, int num){
+		std::vector<std::shared_ptr<Node>> knn;
+		// cout << "================start================" <<endl;
+		for (int i=0; i<num; ++i){
+			// cout << "====================" << i << "=========================" << endl;
+			std::shared_ptr<Node> nearestNeighborNode = nearestNeighbor(n);
+			knn.push_back(nearestNeighborNode);
+			this->notTarget.push_back(nearestNeighborNode);
+			// cout << n->p.distance(nearest_neighbor->p) << endl;
+			// cout << "================================================" << endl;
+		}
+		// cout << "================end================" <<endl;
+		// std::reverse(knn.begin(), knn.end());
+		this->notTarget.clear();
+		return knn;
+	}
+	void KDTree::addRecord(std::shared_ptr<Node> n){
+		this->record.push_back(n);
+	}
+	std::vector<std::shared_ptr<Node>>& KDTree::getRecord(){
+		return this->record;
+	}
 }

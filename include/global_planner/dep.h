@@ -35,6 +35,9 @@ namespace globalPlanner{
 		Eigen::Vector3d localRegionSize_;
 		int sampleThresh_;
 		double distThresh_;
+		double FOV_;
+		double dmin_;
+		double dmax_;
 
 		// data
 		bool odomReceived_ = false;
@@ -59,6 +62,7 @@ namespace globalPlanner{
 		void getBestViewCandidates();
 		void findBestPath();
 
+
 		// callback functions
 		void odomCB(const nav_msgs::OdometryConstPtr& odom);
 		void visCB(const ros::TimerEvent&);
@@ -68,6 +72,7 @@ namespace globalPlanner{
 
 		// help function
 		std::shared_ptr<PRM::Node> randomConfigBBox(const Eigen::Vector3d& region);
+		bool sensorRangeCondition(const shared_ptr<PRM::Node> n1, shared_ptr<PRM::Node> n2);
 
 	};
 }

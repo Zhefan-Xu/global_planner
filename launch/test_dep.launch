@@ -1,4 +1,6 @@
 <launch>	
-	<rosparam file="$(find global_planner)/cfg/dep_param.yaml" />
+	<rosparam file="$(find global_planner)/cfg/dep_param.yaml" ns="/DEP"/>
+	<rosparam file="$(find global_planner)/cfg/dynamic_map_param.yaml" ns="/dynamic_map"/>
+	<rosparam file="$(find global_planner)/cfg/dynamic_detector_param.yaml" ns="/dynamic_detector" />
 	<node pkg="global_planner" type="dep_node" name="dep_node" output="screen" />
 </launch>

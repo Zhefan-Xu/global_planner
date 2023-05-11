@@ -45,6 +45,9 @@ namespace globalPlanner{
     	tf2::convert(quat, tf_quat);
     	tf2::Matrix3x3(tf_quat).getRPY(roll, pitch, yaw);
     }
+	inline double angleBetweenVectors(const Eigen::Vector3d& a, const Eigen::Vector3d& b){
+        return std::atan2(a.cross(b).norm(), a.dot(b));
+    }
 }
 
 #endif

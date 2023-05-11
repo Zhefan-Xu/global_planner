@@ -3,3 +3,8 @@ local_region_size: [5, 5, 5]
 global_region_size: [10, 10, 10]
 sampleThresh: 50
 distThresh: 0.8
+
+# Camera Parameters
+FOV: 1.8
+dmin: 0
+dmax: 1.0
