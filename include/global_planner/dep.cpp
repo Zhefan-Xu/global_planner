@@ -14,10 +14,11 @@ namespace globalPlanner{
 		this->hint_ = "[DEP]";
 		this->initParam();
 		this->initModules();
+		this->registerPub();
 		this->registerCallback();
 	}
 
-	void DEP::initMap(const std::shared_ptr<mapManager::dynamicMap>& map){
+	void DEP::setMap(const std::shared_ptr<mapManager::dynamicMap>& map){
 		this->map_ = map;
 	}
 
@@ -119,10 +120,10 @@ namespace globalPlanner{
 
 	}
 
-	void DEP::makePlan(){
-		if (not this->odomReceived_) return;
+	bool DEP::makePlan(){
+		if (not this->odomReceived_) return false;
 		this->buildRoadMap();
-
+		return true;
 		//this->getBestViewCandidates();
 
 		//this->findBestPath();
@@ -225,24 +226,34 @@ namespace globalPlanner{
 		// local sample (TODO)
 		// std::vector<PRM::Node*> new_nodes;
 		// double threshold = 500; // HardCode threshold
+		cout << "here" << endl;
 		bool saturate = false;
 		bool regionSaturate = false;
 		int countSample = 0;
+		std::shared_ptr<PRM::Node> n;
 		while (ros::ok() and not saturate){
 			cout<<"sample"<<endl;
-			std::shared_ptr<PRM::Node> n;
 			if (regionSaturate){
 				int countFailureGlobal = 0;
 				// Generate new node
-				while (ros::ok() and true){
+				while (ros::ok()){
+					cout << "global failure count: " << countFailureGlobal << endl;
 					if (countFailureGlobal > this->sampleThresh_){
 						saturate = true;
 						break;
 					}
 					n = this->randomConfigBBox(this->globalRegionSize_);
 					// Check how close new node is other nodes
-					shared_ptr<PRM::Node> nn = this->roadmap_->nearestNeighbor(n);
-					double distToNN = (n->pos - nn->pos).norm();
+					double distToNN;
+					if (this->roadmap_->getSize() != 0){
+						cout << "find nearest neighbor" << endl;
+						shared_ptr<PRM::Node> nn = this->roadmap_->nearestNeighbor(n);
+						cout << "find nearest neighbor end" << endl;
+						distToNN = (n->pos - nn->pos).norm();
+					}
+					else{
+						distToNN = this->distThresh_;
+					}
 					if (distToNN < this->distThresh_){
 						++countFailureGlobal;
 					}
@@ -250,23 +261,37 @@ namespace globalPlanner{
 						this->roadmap_->insert(n);
 						this->prmNodeVec_.push_back(n);
 						++countSample;
-						break;
+						// break;
 					}
+					ros::spinOnce();
 				}
 			}
 			else{
 				if (true){
 					int countFailureLocal = 0;
 					// Generate new node
+					cout << "local sample" << endl;
 					while (ros::ok() and true){
+						cout << "failure number: " << countFailureLocal << endl;
 						if (countFailureLocal > this->sampleThresh_){
 							regionSaturate = true;
 							break;
 						}
 						n = this->randomConfigBBox(this->localRegionSize_);
+						cout << "get new node" << endl;
 						// Check how close new node is other nodes
-						shared_ptr<PRM::Node> nn = this->roadmap_->nearestNeighbor(n);
-						double distToNN = (n->pos - nn->pos).norm();
+						double distToNN;
+
+						if (this->roadmap_->getSize() != 0){
+							cout << "find nearest neighbor" << endl;
+							shared_ptr<PRM::Node> nn = this->roadmap_->nearestNeighbor(n);
+							cout << "find nearest neighbor end" << endl;
+							distToNN = (n->pos - nn->pos).norm();
+						}
+						else{
+							distToNN = this->distThresh_;
+						}
+						cout << "distance to nn" << distToNN << endl;
 						if (distToNN < this->distThresh_){
 							++countFailureLocal;
 						}
@@ -274,11 +299,14 @@ namespace globalPlanner{
 							this->roadmap_->insert(n);
 							this->prmNodeVec_.push_back(n);
 							++countSample;
-							break;
+							cout << "new sample added" << endl;
+							// break;
 						}
+						ros::spinOnce();
 					}
 				}
 			}
+			ros::spinOnce();
 		}
 		cout << "newly added: " << countSample << " samples" << endl;
 		
@@ -375,6 +403,7 @@ namespace globalPlanner{
 			p(1) = globalPlanner::randomNumber(minRegion(1), maxRegion(1));
 			p(2) = globalPlanner::randomNumber(minRegion(2), maxRegion(2));
 			valid = not this->map_->isInflatedOccupied(p) and not this->map_->isUnknown(p);
+			ros::spinOnce();
 		}
 
 		std::shared_ptr<PRM::Node> newNode (new PRM::Node(p));

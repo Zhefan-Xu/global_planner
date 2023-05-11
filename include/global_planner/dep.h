@@ -51,13 +51,13 @@ namespace globalPlanner{
 	public:
 		DEP(const ros::NodeHandle& nh);
 
-		void initMap(const std::shared_ptr<mapManager::dynamicMap>& map);
+		void setMap(const std::shared_ptr<mapManager::dynamicMap>& map);
 		void initParam();
 		void initModules();
 		void registerPub();
 		void registerCallback();
 
-		void makePlan();
+		bool makePlan();
 		void buildRoadMap();
 		void getBestViewCandidates();
 		void findBestPath();
