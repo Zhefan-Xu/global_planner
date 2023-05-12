@@ -78,12 +78,19 @@ namespace globalPlanner{
 		}
 
 		//Camera Parameters	
-		if (not this->nh_.getParam(this->ns_ + "/FOV", this->FOV_)){
-			this->FOV_ = 0.8;
-			cout << this->hint_ << ": No FOV param. Use default: 0.8" << endl;
+		if (not this->nh_.getParam(this->ns_ + "/horizontal_FOV", this->horizontalFOV_)){
+			this->horizontalFOV_ = 0.8;
+			cout << this->hint_ << ": No Horizontal FOV param. Use default: 0.8" << endl;
 		}
 		else{
-			cout << this->hint_ << ": FOV: " << this->FOV_ << endl;
+			cout << this->hint_ << ": Horizontal FOV: " << this->horizontalFOV_ << endl;
+		}
+		if (not this->nh_.getParam(this->ns_ + "/vertical_FOV", this->verticalFOV_)){
+			this->verticalFOV_ = 0.8;
+			cout << this->hint_ << ": No Vertical FOV param. Use default: 0.8" << endl;
+		}
+		else{
+			cout << this->hint_ << ": Vertical FOV: " << this->verticalFOV_ << endl;
 		}
 		if (not this->nh_.getParam(this->ns_ + "/dmin", this->dmin_)){
 			this->dmin_ = 0.0;
@@ -104,6 +111,14 @@ namespace globalPlanner{
 	void DEP::initModules(){
 		// initialize roadmap
 		this->roadmap_.reset(new PRM::KDTree ());
+
+		// Yaw candicates array;
+		for (int i=0; i<32; ++i){
+			this->yaws.push_back(i*2*PI_const/32);
+		}
+		for (double yaw: this->yaws){
+			this->yawNumVoxels[yaw] = 0;
+		}
 	}
 
 	void DEP::registerPub(){
@@ -131,9 +146,12 @@ namespace globalPlanner{
 
 	bool DEP::sensorRangeCondition(shared_ptr<PRM::Node> n1, shared_ptr<PRM::Node> n2){
 		Eigen::Vector3d direction = n2->pos - n1->pos;
-		Eigen::Vector3d projection (direction.x(), direction.y(), 0);
+		Eigen::Vector3d projection;
+		projection(0) = direction.x();
+		projection(1) = direction.y();
+		projection(2) = 0;
 		double verticalAngle = angleBetweenVectors(direction, projection);
-		if (verticalAngle < this->FOV_/2){
+		if (verticalAngle < this->verticalFOV_/2){
 			return true;
 		}
 		else{
@@ -141,103 +159,122 @@ namespace globalPlanner{
 		}
 	}
 
-	// double calculateUnknown(const OcTree& tree, shared_ptr<PRM::Node> n, double dmax){
-	// 	// Position:
-	// 	Eigen::Vector3d p = n->p;
+	// TODO create sensor check for 
+	// vert, horz FOV, collision, and sensor distance range
+	// for yaw angles in vector3d:  cos(yaw), sin(yaw), 0
+	// horz angle between yaw angle vector and direction (x y 0) vector for horz FOV
+	// Vert angle yaw angle vector and yaw angle vector (c s z) z is direction.z()
+	bool DEP::sensorFOVCondition(Eigen::Vector3d n){
+		Eigen::Vector3d direction = n - this->position_;
+		Eigen::Vector3d horizontalProjection;
+		horizontalProjection(0) = direction.x();
+		horizontalProjection(1) = direction.y();
+		horizontalProjection(2) = 0;
+		Eigen::Vector3d yawAngleVector;
+		yawAngleVector(0) = cos(this->currYaw_);
+		yawAngleVector(1) = sin(this->currYaw_);
+		yawAngleVector(2) = 0;
+		double horizontalAngle = angleBetweenVectors(yawAngleVector, horizontalProjection);
+		if (horizontalAngle > this->horizontalFOV_/2){
+			return false;
+		}
+		Eigen::Vector3d verticalProjection;
+		verticalProjection(0) = cos(this->currYaw_);
+		verticalProjection(1) = sin(this->currYaw_);
+		verticalProjection(2) = direction.z();
+		double verticalAngle = angleBetweenVectors(yawAngleVector, verticalProjection);
+		if (verticalAngle > this->verticalFOV_/2){
+			return false;
+		}
+		double distance = direction.norm();
+		if (distance > this->dmax_){
+			return false;
+		}
+		bool hasCollision = this->map_->isInflatedOccupiedLine(n, this->position_);
+		if (hasCollision == true){
+			return false;
+		}
+		return true;
+	}
 
-	// 	Eigen::Vector3d pmin = p - dmax;
-	// 	Eigen::Vector3d pmax = p + dmax;
-	// 	std::list<Eigen::Vector3d> nodeCenters;
-	// 	//tree.getUnknownLeafCenters(nodeCenters, pmin, pmax);
+	// map_->getRes
+	// loop to create vector of horizon points
+	// loop through horizon points for unknown points
 
-	// 	// Yaw candicates array;
+	double DEP::calculateUnknown(shared_ptr<PRM::Node> n){
+		// Position:
+		Eigen::Vector3d p = n->pos;
+
+		int countTotalUnknown = 0;
+		for (double z = p(2) - this->dmax_; z < p(2)+ this->dmax_; z =+ this->map_->getRes()){
+			for (double y = p(1)- this->dmax_; y < p(1)+ this->dmax_; y =+ this->map_->getRes()){
+				for (double x = p(0)- this->dmax_; x < p(0)+ this->dmax_; x =+ this->map_->getRes()){
+					Eigen::Vector3d nodePoint;
+					nodePoint(0) = x;
+					nodePoint(1) = y;
+					nodePoint(2) = z;
+					Eigen::Vector3d direction = nodePoint - p;
+					Eigen::Vector3d face;
+					face(0) = direction.x();
+					face(1) = direction.y();
+					face(2) = 0;
+					if (sensorFOVCondition(nodePoint)){
+						if (this->map_->isUnknown(nodePoint)){
+							countTotalUnknown++;
+							for (double yaw: this->yaws){
+								Eigen::Vector3d yawDirection;
+								yawDirection(0) = cos(yaw);
+								yawDirection(1) = sin(yaw);
+								yawDirection(2) = 0;
+								double angleToYaw = angleBetweenVectors(face, yawDirection);
+								if (angleToYaw <= this->horizontalFOV_/2){
+									// Give credits to some good unknown
+									this->yawNumVoxels[yaw] += 1;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		cout << "+----------------------------+" << endl;
+		cout << "Total Unknown: "<< countTotalUnknown << endl;
+		cout << "+----------------------------+" << endl;
+		n->yawNumVoxels = this->yawNumVoxels;
+		return countTotalUnknown;
+	}
+
+	bool isNodeRequireUpdate(std::shared_ptr<PRM::Node> n, std::vector<std::shared_ptr<PRM::Node>> path, double& leastDistance){
+		double distanceThresh = 2;
+		leastDistance = 1000000;
+		for (std::shared_ptr<PRM::Node> waypoint: path){
+			double currentDistance = (n->pos - waypoint->pos).norm();
+			if (currentDistance < leastDistance){
+				leastDistance = currentDistance;
+			}
+		}
+		if (leastDistance <= distanceThresh){
+			return true;
+		}
+		else{
+			return false;	
+		}
 		
-	// 	std::map<double, int> yawNumVoxels;
-	// 	std::vector<double> yaws;
-	// 	for (int i=0; i<32; ++i){
-	// 		yaws.push_back(i*2*PI_const/32);
-	// 	}
-	// 	for (double yaw: yaws){
-	// 		yawNumVoxels[yaw] = 0;
-	// 	}
-
-	// 	int count_total_unknown = 0;
-	// 	int count_total_frontier = 0;
-	// 	int count_total_surface_frontier = 0;
-	// 	for (std::list<Eigen::Vector3d>::iterator itr=nodeCenters.begin(); 
-	// 		itr!=node_centers.end(); ++itr){
-	// 		Eigen::Vector3d u = *itr;
-	// 		bool not_in_scope = u.x() > env_x_max or u.x() < env_x_min or u.y() > env_y_max or u.y() < env_y_min or u.z() > env_z_max or u.z() < env_z_min;
-	// 		if (not_in_scope){
-	// 			continue;
-	// 		}
-	// 		OcTreeNode* nptr = tree.search(u);
-	// 		point3d direction = u - p;
-	// 		point3d face (direction.x(), direction.y(), 0);
-	// 		if (nptr == NULL){ // Unknown
-	// 			if (isInFOV(tree, p, u, dmax)){
-	// 				bool isNodeFrontier=false, isNodeSurfaceFrontier=false; 
-	// 				isNodeFrontier= isFrontier(u, tree);
-	// 				if (isNodeFrontier){
-	// 					isNodeSurfaceFrontier = isSurfaceFrontier(u, tree);
-	// 				}
-					
-	// 				if (isNodeFrontier == false and isNodeSurfaceFrontier == false){
-	// 					count_total_unknown += 1;
-	// 				}
-	// 				else if (isNodeFrontier == true and isNodeSurfaceFrontier == false){
-	// 					count_total_unknown += 2;
-	// 				}
-	// 				else if (isNodeFrontier == true and isNodeSurfaceFrontier == true){
-	// 					count_total_unknown += 4;
-	// 				}
-
-
-	// 				// iterate through yaw angles
-	// 				for (double yaw: yaws){
-	// 					point3d yaw_direction (cos(yaw), sin(yaw), 0);
-	// 					double angle_to_yaw = face.angleTo(yaw_direction);
-	// 					if (angle_to_yaw <= FOV/2){
-	// 						// Give credits to some good unknown
-	// 						// case 1: it is a frontier unknown
-	// 						if (isNodeFrontier == false and isNodeSurfaceFrontier == false){
-	// 							yaw_num_voxels[yaw] += 1;
-	// 						}
-	// 						else if (isNodeFrontier == true and isNodeSurfaceFrontier == false){
-	// 							yaw_num_voxels[yaw] += 2;
-	// 						}
-	// 						else if (isNodeFrontier == true and isNodeSurfaceFrontier == true){
-	// 							yaw_num_voxels[yaw] += 4;
-	// 						}						
-	// 					}
-	// 				}
-	// 			}
-	// 		}
-	// 	}
-	// 	// cout << "+----------------------------+" << endl;
-	// 	// cout << "Total Unknown: "<< count_total_unknown << endl;
-	// 	// cout << "Total Frontier: " << count_total_frontier << endl;
-	// 	// cout << "Total Surface Frontier: " << count_total_surface_frontier << endl;
-	// 	// cout << "+----------------------------+" << endl;
-	// 	n->yaw_num_voxels = yaw_num_voxels;
-	// 	return count_total_unknown;
-	// }
+	}
 	void DEP::buildRoadMap(){
-		// local sample (TODO)
-		// std::vector<PRM::Node*> new_nodes;
-		// double threshold = 500; // HardCode threshold
-		cout << "here" << endl;
+		std::vector<std::shared_ptr<PRM::Node>> path;
+		//cout << "here" << endl;
 		bool saturate = false;
 		bool regionSaturate = false;
 		int countSample = 0;
 		std::shared_ptr<PRM::Node> n;
 		while (ros::ok() and not saturate){
-			cout<<"sample"<<endl;
+			//cout<<"sample"<<endl;
 			if (regionSaturate){
 				int countFailureGlobal = 0;
 				// Generate new node
 				while (ros::ok()){
-					cout << "global failure count: " << countFailureGlobal << endl;
+					//cout << "global failure count: " << countFailureGlobal << endl;
 					if (countFailureGlobal > this->sampleThresh_){
 						saturate = true;
 						break;
@@ -246,9 +283,9 @@ namespace globalPlanner{
 					// Check how close new node is other nodes
 					double distToNN;
 					if (this->roadmap_->getSize() != 0){
-						cout << "find nearest neighbor" << endl;
+						//cout << "find nearest neighbor" << endl;
 						shared_ptr<PRM::Node> nn = this->roadmap_->nearestNeighbor(n);
-						cout << "find nearest neighbor end" << endl;
+						//cout << "find nearest neighbor end" << endl;
 						distToNN = (n->pos - nn->pos).norm();
 					}
 					else{
@@ -270,28 +307,28 @@ namespace globalPlanner{
 				if (true){
 					int countFailureLocal = 0;
 					// Generate new node
-					cout << "local sample" << endl;
+					//cout << "local sample" << endl;
 					while (ros::ok() and true){
-						cout << "failure number: " << countFailureLocal << endl;
+						//cout << "failure number: " << countFailureLocal << endl;
 						if (countFailureLocal > this->sampleThresh_){
 							regionSaturate = true;
 							break;
 						}
 						n = this->randomConfigBBox(this->localRegionSize_);
-						cout << "get new node" << endl;
+						//cout << "get new node" << endl;
 						// Check how close new node is other nodes
 						double distToNN;
 
 						if (this->roadmap_->getSize() != 0){
-							cout << "find nearest neighbor" << endl;
+							//cout << "find nearest neighbor" << endl;
 							shared_ptr<PRM::Node> nn = this->roadmap_->nearestNeighbor(n);
-							cout << "find nearest neighbor end" << endl;
+							//cout << "find nearest neighbor end" << endl;
 							distToNN = (n->pos - nn->pos).norm();
 						}
 						else{
 							distToNN = this->distThresh_;
 						}
-						cout << "distance to nn" << distToNN << endl;
+						//cout << "distance to nn" << distToNN << endl;
 						if (distToNN < this->distThresh_){
 							++countFailureLocal;
 						}
@@ -299,7 +336,7 @@ namespace globalPlanner{
 							this->roadmap_->insert(n);
 							this->prmNodeVec_.push_back(n);
 							++countSample;
-							cout << "new sample added" << endl;
+							//cout << "new sample added" << endl;
 							// break;
 						}
 						ros::spinOnce();
@@ -315,25 +352,81 @@ namespace globalPlanner{
 		for (std::shared_ptr<PRM::Node> n: this->prmNodeVec_){
 			std::vector<std::shared_ptr<PRM::Node>> knn = this->roadmap_->kNearestNeighbor(n, 15);
 			
-			for (std::shared_ptr<PRM::Node> nearestNeighborNode: knn){
-				bool hasCollision = map_->isInflatedOccupiedLine(n->pos, nearestNeighborNode->pos);
+			for (std::shared_ptr<PRM::Node> nearestNeighborNode: knn){ // Check collision last if all other conditions are satisfied
+				
 				double distance2knn = (n->pos - nearestNeighborNode->pos).norm();
 				bool rangeCondition = sensorRangeCondition(n, nearestNeighborNode) and sensorRangeCondition(nearestNeighborNode, n);
 				
-				if (hasCollision == false and distance2knn < 1.5 and rangeCondition == true){
-					n->adjNodes.insert(nearestNeighborNode);
-					nearestNeighborNode->adjNodes.insert(n); 
+				if (distance2knn < 1.5 and rangeCondition == true){
+					bool hasCollision = map_->isInflatedOccupiedLine(n->pos, nearestNeighborNode->pos);
+					if (hasCollision == false){
+						n->adjNodes.insert(nearestNeighborNode);
+						nearestNeighborNode->adjNodes.insert(n);
+					} 
 				}
 			}
 
 			if (n->adjNodes.size() != 0){
 				this->roadmap_->addRecord(n);
-				//double numVoxels = calculateUnknown(this->map_, n, this->dmax_);
-				//n->numVoxels = numVoxels;
+				double numVoxels = calculateUnknown(n);
+				n->numVoxels = numVoxels;
 			}
 		}
+		cout << "finished node connection" <<endl;
 
+		
 		// information gain update
+		int countUpdateNode = 0;
+		int countActualUpdate = 0;
+		int totalUnknown = 0;
+		int maxUnknown = 0;
+		for (std::shared_ptr<PRM::Node> n: this->roadmap_->getRecord()){
+			n->g = 1000;
+			n->f = 1000;
+			n->parent = NULL;
+			// Check whether the nodes need to update:
+			double leastDistance;
+			bool update = isNodeRequireUpdate(n, path, leastDistance);
+			if (update and n->newNode==false){
+				n->update = true;
+				++countUpdateNode;
+				// check the update condition: 
+				// 1. if node is very close to trajetory: set it to zero
+				// 2. if it is already 0, leave it
+				// 3. if it is less than threshold (e.g 100), set it to zero
+				// 4. if non of those applies, recalculate it
+				double cutOffValue = 5;
+				double cutOffDistance = 0.5;
+				if (n->numVoxels <= cutOffValue or leastDistance <= cutOffDistance){
+					n->numVoxels = 0;
+					for (double yaw:yaws){
+						n->yawNumVoxels[yaw] = 0;
+					}
+				}
+				else{
+					++countActualUpdate;
+					double numVoxels = calculateUnknown(n);
+					n->numVoxels = numVoxels;
+				}
+			}
+			else{
+				n->update = false;
+			}
+			n->newNode = false;
+
+			if (n->numVoxels>maxUnknown){
+				maxUnknown = n->numVoxels;
+			}
+			this->roadmap_->addGoalPQ(n);
+			totalUnknown += n->numVoxels;
+		}
+		this->roadmap_->setTotalUnknown(totalUnknown);
+		this->roadmap_->setMaxUnknown(maxUnknown);
+		cout << "Total Number of Unknown Voxels is: " << this->roadmap_->getTotalUnknown() << endl;
+		cout << "Max Unknown Voxels is: " << this->roadmap_->getMaxUnknown() << endl;
+		cout << "Number of nodes needed updated is: " << countUpdateNode << endl;
+		cout << "Number of actual nodes needed updated is: " << countActualUpdate << endl;
+
 	}	 
 
 	void DEP::getBestViewCandidates(){

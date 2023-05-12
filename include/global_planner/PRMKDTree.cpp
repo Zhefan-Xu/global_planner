@@ -151,10 +151,26 @@ namespace PRM{
 		this->notTarget.clear();
 		return knn;
 	}
+	
 	void KDTree::addRecord(std::shared_ptr<Node> n){
 		this->record.push_back(n);
 	}
+	void KDTree::addGoalPQ(std::shared_ptr<Node> n){
+		this->goalNodes.push(n);
+	}
 	std::vector<std::shared_ptr<Node>>& KDTree::getRecord(){
 		return this->record;
+	}
+	void KDTree::setMaxUnknown(int maxUnknown){
+		this->maxUnknown = maxUnknown;
+	}
+	int KDTree::getMaxUnknown(){
+		return this->maxUnknown;
+	}
+	void KDTree::setTotalUnknown(int totalNumUnknown){
+		this->totalNumUnknown = totalNumUnknown;
+	}
+	int KDTree::getTotalUnknown(){
+		return this->totalNumUnknown;
 	}
 }

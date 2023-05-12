@@ -35,7 +35,8 @@ namespace globalPlanner{
 		Eigen::Vector3d localRegionSize_;
 		int sampleThresh_;
 		double distThresh_;
-		double FOV_;
+		double horizontalFOV_;
+		double verticalFOV_;
 		double dmin_;
 		double dmax_;
 
@@ -43,7 +44,8 @@ namespace globalPlanner{
 		bool odomReceived_ = false;
 		Eigen::Vector3d position_;
 		double currYaw_;
-
+		std::vector<double> yaws;
+		std::map<double, int> yawNumVoxels;
 
 		// visualization data
 		std::vector<std::shared_ptr<PRM::Node>> prmNodeVec_;
@@ -73,6 +75,8 @@ namespace globalPlanner{
 		// help function
 		std::shared_ptr<PRM::Node> randomConfigBBox(const Eigen::Vector3d& region);
 		bool sensorRangeCondition(const shared_ptr<PRM::Node> n1, shared_ptr<PRM::Node> n2);
+		bool sensorFOVCondition(const Eigen::Vector3d n);
+		double calculateUnknown(const shared_ptr<PRM::Node> n);
 
 	};
 }

@@ -5,6 +5,7 @@ sampleThresh: 50
 distThresh: 0.8
 
 # Camera Parameters
-FOV: 1.8
+horizontal_FOV: 1.57
+vertical_FOV: 1.57
 dmin: 0
 dmax: 1.0
