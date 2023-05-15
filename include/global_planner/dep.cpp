@@ -106,6 +106,24 @@ namespace globalPlanner{
 		else{
 			cout << this->hint_ << ": Max Depth: " << this->dmax_ << endl;
 		}
+
+		// nearest neighbor number
+		if (not this->nh_.getParam(this->ns_ + "/nearest_neighbor_number", this->nnNum_)){
+			this->nnNum_ = 15;
+			cout << this->hint_ << ": No nearest neighbor param. Use default: 15" << endl;
+		}
+		else{
+			cout << this->hint_ << ": Nearest neighbor number is set to: " << this->nnNum_ << endl;
+		}
+
+		// node connection max distances
+		if (not this->nh_.getParam(this->ns_ + "/max_connect_dist", this->maxConnectDist_)){
+			this->maxConnectDist_ = 1.5;
+			cout << this->hint_ << ": No max conect distance param. Use default: 1.5m." << endl;
+		}
+		else{
+			cout << this->hint_ << ": Max connect distance is set to: " << this->maxConnectDist_ << endl;
+		}
 	}
 
 	void DEP::initModules(){
@@ -349,39 +367,27 @@ namespace globalPlanner{
 		}
 		cout << "newly added: " << countSample << " samples" << endl;
 		
-		cout << "Newly added vec size: " <<newNodes.size() << endl;
 		// node connection
 		for (std::shared_ptr<PRM::Node> n : newNodes){
-			cout << "start finding k nn" << endl;
-			std::vector<std::shared_ptr<PRM::Node>> knn = this->roadmap_->kNearestNeighbor(n, 15);
-			cout << "finish finding k nn" << endl;
-			cout << "current point is: " << n->pos.transpose() << endl;
+			std::vector<std::shared_ptr<PRM::Node>> knn = this->roadmap_->kNearestNeighbor(n, this->nnNum_);
 			for (std::shared_ptr<PRM::Node> nearestNeighborNode: knn){ // Check collision last if all other conditions are satisfied
-				cout << "in loop of knn check" << endl;
-				cout << "nn is: " << nearestNeighborNode->pos.transpose() << endl;
 				double distance2knn = (n->pos - nearestNeighborNode->pos).norm();
 				bool rangeCondition = sensorRangeCondition(n, nearestNeighborNode) and sensorRangeCondition(nearestNeighborNode, n);
 				
-				if (distance2knn < 1.5 and rangeCondition == true){
+				if (distance2knn < this->maxConnectDist_ and rangeCondition == true){
 					bool hasCollision = not this->map_->isInflatedFreeLine(n->pos, nearestNeighborNode->pos);
 					if (hasCollision == false){
 						n->adjNodes.insert(nearestNeighborNode);
 						nearestNeighborNode->adjNodes.insert(n);
 					}
-					else{
-						cout << "has collsion here" << endl;
-					} 
 				}
 			}
-			cout << "end knn loop check" << endl;
 
 			if (n->adjNodes.size() != 0){
 				this->roadmap_->addRecord(n);
-				cout << "added to record" << endl;
 				double numVoxels = calculateUnknown(n);
 				n->numVoxels = numVoxels;
 			}
-			cout << "end the first iteration" << endl;
 		}
 		cout << "finished node connection" <<endl;
 

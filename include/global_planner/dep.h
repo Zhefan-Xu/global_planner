@@ -39,6 +39,8 @@ namespace globalPlanner{
 		double verticalFOV_;
 		double dmin_;
 		double dmax_;
+		int nnNum_;
+		double maxConnectDist_;
 
 		// data
 		bool odomReceived_ = false;
