@@ -165,6 +165,9 @@ namespace PRM{
 	void KDTree::addGoalPQ(std::shared_ptr<Node> n){
 		this->goalNodes.push(n);
 	}
+	std::priority_queue<std::shared_ptr<Node>, std::vector<std::shared_ptr<Node>>, GainCompareNode> KDTree::getGoalNodes(){
+		return this->goalNodes;
+	}
 	std::vector<std::shared_ptr<Node>>& KDTree::getRecord(){
 		return this->record;
 	}

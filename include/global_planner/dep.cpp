@@ -132,10 +132,10 @@ namespace globalPlanner{
 
 		// Yaw candicates array;
 		for (int i=0; i<32; ++i){
-			this->yaws.push_back(i*2*PI_const/32);
+			this->yaws_.push_back(i*2*PI_const/32);
 		}
-		for (double yaw: this->yaws){
-			this->yawNumVoxels[yaw] = 0;
+		for (double yaw: this->yaws_){
+			this->yawNumVoxels_[yaw] = 0;
 		}
 	}
 
@@ -235,7 +235,7 @@ namespace globalPlanner{
 						if (this->map_->isUnknown(nodePoint)){
 							// cout<<"Unknown" <<endl;
 							countTotalUnknown++;
-							for (double yaw: this->yaws){
+							for (double yaw: this->yaws_){
 								Eigen::Vector3d yawDirection;
 								yawDirection(0) = cos(yaw);
 								yawDirection(1) = sin(yaw);
@@ -243,7 +243,7 @@ namespace globalPlanner{
 								double angleToYaw = angleBetweenVectors(face, yawDirection);
 								if (angleToYaw <= this->horizontalFOV_/2){
 									// Give credits to some good unknown
-									this->yawNumVoxels[yaw] += 1;
+									this->yawNumVoxels_[yaw] += 1;
 								}
 							}
 						}
@@ -255,7 +255,7 @@ namespace globalPlanner{
 		cout << "+----------------------------+" << endl;
 		cout << "Total Unknown: "<< countTotalUnknown << endl;
 		cout << "+----------------------------+" << endl;
-		n->yawNumVoxels = this->yawNumVoxels;
+		n->yawNumVoxels = this->yawNumVoxels_;
 		return countTotalUnknown;
 	}
 
@@ -411,7 +411,7 @@ namespace globalPlanner{
 				double cutOffDistance = 0.5;
 				if (n->numVoxels <= cutOffValue or leastDistance <= cutOffDistance){
 					n->numVoxels = 0;
-					for (double yaw:yaws){
+					for (double yaw:this->yaws_){
 						n->yawNumVoxels[yaw] = 0;
 					}
 				}
@@ -442,7 +442,32 @@ namespace globalPlanner{
 	}	 
 
 	void DEP::getBestViewCandidates(){
+		double thresh = 0.1;
+		double minNumber = 10;
+		double maxNumVoxels = 0;
+		// Go over node which has number of voxels larger than 0.5 maximum
+		bool firstNode = true;
+		std::priority_queue<std::shared_ptr<PRM::Node>, std::vector<std::shared_ptr<PRM::Node>>, PRM::GainCompareNode> goalNodes = this->roadmap_->getGoalNodes();
+		while (true){
+			std::shared_ptr<PRM::Node> n = goalNodes.top();
+			goalNodes.pop();
 
+			if (n->numVoxels < maxNumVoxels * thresh){
+				break;
+			}
+
+			if (firstNode){
+				maxNumVoxels = n->numVoxels;
+				firstNode = false;
+			}
+			this->goalCandidates_.push_back(n);
+		}
+
+		if (this->goalCandidates_.size() < minNumber){
+			std::shared_ptr<PRM::Node> n = goalNodes.top();
+			goalNodes.pop();
+			this->goalCandidates_.push_back(n);
+		}
 	}
 
 	void DEP::findBestPath(){

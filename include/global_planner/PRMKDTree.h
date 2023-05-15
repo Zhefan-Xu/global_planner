@@ -65,6 +65,7 @@ namespace PRM{
 		std::vector<std::shared_ptr<Node>> kNearestNeighbor(std::shared_ptr<Node> n, int num);
 		void addRecord(std::shared_ptr<Node>);
 		void addGoalPQ(std::shared_ptr<Node>);
+		std::priority_queue<std::shared_ptr<Node>, std::vector<std::shared_ptr<Node>>, GainCompareNode> getGoalNodes();
 		std::vector<std::shared_ptr<Node>>& getRecord();
 		void setTotalUnknown(int totalNumUnknown);
 		int getTotalUnknown();

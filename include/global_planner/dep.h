@@ -46,8 +46,9 @@ namespace globalPlanner{
 		bool odomReceived_ = false;
 		Eigen::Vector3d position_;
 		double currYaw_;
-		std::vector<double> yaws;
-		std::map<double, int> yawNumVoxels;
+		std::vector<double> yaws_;
+		std::map<double, int> yawNumVoxels_;
+		std::vector<std::shared_ptr<PRM::Node>> goalCandidates_;
 
 		// visualization data
 		std::vector<std::shared_ptr<PRM::Node>> prmNodeVec_;
