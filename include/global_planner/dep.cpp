@@ -190,7 +190,7 @@ namespace globalPlanner{
 		if (distance > this->dmax_){
 			return false;
 		}
-		bool hasCollision = this->map_->isInflatedOccupiedLine(n, this->position_);
+		bool hasCollision = not this->map_->isInflatedFreeLine(n, this->position_);
 		if (hasCollision == true){
 			return false;
 		}
@@ -304,7 +304,6 @@ namespace globalPlanner{
 						++countSample;
 						// break;
 					}
-					ros::spinOnce();
 				}
 			}
 			else{
@@ -344,17 +343,15 @@ namespace globalPlanner{
 							//cout << "new sample added" << endl;
 							// break;
 						}
-						ros::spinOnce();
 					}
 				}
 			}
-			ros::spinOnce();
 		}
 		cout << "newly added: " << countSample << " samples" << endl;
 		
 		cout << "Newly added vec size: " <<newNodes.size() << endl;
 		// node connection
-		for (std::shared_ptr<PRM::Node> n: newNodes){
+		for (std::shared_ptr<PRM::Node> n : newNodes){
 			cout << "start finding k nn" << endl;
 			std::vector<std::shared_ptr<PRM::Node>> knn = this->roadmap_->kNearestNeighbor(n, 15);
 			cout << "finish finding k nn" << endl;
@@ -366,10 +363,13 @@ namespace globalPlanner{
 				bool rangeCondition = sensorRangeCondition(n, nearestNeighborNode) and sensorRangeCondition(nearestNeighborNode, n);
 				
 				if (distance2knn < 1.5 and rangeCondition == true){
-					bool hasCollision = this->map_->isInflatedOccupiedLine(n->pos, nearestNeighborNode->pos);
+					bool hasCollision = not this->map_->isInflatedFreeLine(n->pos, nearestNeighborNode->pos);
 					if (hasCollision == false){
 						n->adjNodes.insert(nearestNeighborNode);
 						nearestNeighborNode->adjNodes.insert(n);
+					}
+					else{
+						cout << "has collsion here" << endl;
 					} 
 				}
 			}
@@ -541,8 +541,7 @@ namespace globalPlanner{
 			p(0) = globalPlanner::randomNumber(minRegion(0), maxRegion(0));
 			p(1) = globalPlanner::randomNumber(minRegion(1), maxRegion(1));
 			p(2) = globalPlanner::randomNumber(minRegion(2), maxRegion(2));
-			valid = not this->map_->isInflatedOccupied(p) and not this->map_->isUnknown(p);
-			ros::spinOnce();
+			valid = this->map_->isInflatedFree(p);
 		}
 
 		std::shared_ptr<PRM::Node> newNode (new PRM::Node(p));
