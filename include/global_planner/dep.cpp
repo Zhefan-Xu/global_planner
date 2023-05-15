@@ -206,9 +206,10 @@ namespace globalPlanner{
 		Eigen::Vector3d p = n->pos;
 
 		int countTotalUnknown = 0;
-		for (double z = p(2) - this->dmax_; z < p(2)+ this->dmax_; z =+ this->map_->getRes()){
-			for (double y = p(1)- this->dmax_; y < p(1)+ this->dmax_; y =+ this->map_->getRes()){
-				for (double x = p(0)- this->dmax_; x < p(0)+ this->dmax_; x =+ this->map_->getRes()){
+		for (double z = p(2) - this->dmax_; z < p(2)+ this->dmax_; z += this->map_->getRes()){
+			for (double y = p(1)- this->dmax_; y < p(1)+ this->dmax_; y += this->map_->getRes()){
+				for (double x = p(0)- this->dmax_; x < p(0)+ this->dmax_; x += this->map_->getRes()){
+					// cout << "x: " << x << endl;
 					Eigen::Vector3d nodePoint;
 					nodePoint(0) = x;
 					nodePoint(1) = y;
@@ -236,6 +237,7 @@ namespace globalPlanner{
 					}
 				}
 			}
+			// cout << "inside calculating unknown" << endl;
 		}
 		cout << "+----------------------------+" << endl;
 		cout << "Total Unknown: "<< countTotalUnknown << endl;
@@ -268,6 +270,7 @@ namespace globalPlanner{
 		bool regionSaturate = false;
 		int countSample = 0;
 		std::shared_ptr<PRM::Node> n;
+		std::vector<std::shared_ptr<PRM::Node>> newNodes;
 		while (ros::ok() and not saturate){
 			//cout<<"sample"<<endl;
 			if (regionSaturate){
@@ -296,6 +299,7 @@ namespace globalPlanner{
 					}
 					else{
 						this->roadmap_->insert(n);
+						newNodes.push_back(n);
 						this->prmNodeVec_.push_back(n);
 						++countSample;
 						// break;
@@ -334,6 +338,7 @@ namespace globalPlanner{
 						}
 						else{
 							this->roadmap_->insert(n);
+							newNodes.push_back(n);
 							this->prmNodeVec_.push_back(n);
 							++countSample;
 							//cout << "new sample added" << endl;
@@ -347,30 +352,36 @@ namespace globalPlanner{
 		}
 		cout << "newly added: " << countSample << " samples" << endl;
 		
-
+		cout << "Newly added vec size: " <<newNodes.size() << endl;
 		// node connection
-		for (std::shared_ptr<PRM::Node> n: this->prmNodeVec_){
+		for (std::shared_ptr<PRM::Node> n: newNodes){
+			cout << "start finding k nn" << endl;
 			std::vector<std::shared_ptr<PRM::Node>> knn = this->roadmap_->kNearestNeighbor(n, 15);
-			
+			cout << "finish finding k nn" << endl;
+			cout << "current point is: " << n->pos.transpose() << endl;
 			for (std::shared_ptr<PRM::Node> nearestNeighborNode: knn){ // Check collision last if all other conditions are satisfied
-				
+				cout << "in loop of knn check" << endl;
+				cout << "nn is: " << nearestNeighborNode->pos.transpose() << endl;
 				double distance2knn = (n->pos - nearestNeighborNode->pos).norm();
 				bool rangeCondition = sensorRangeCondition(n, nearestNeighborNode) and sensorRangeCondition(nearestNeighborNode, n);
 				
 				if (distance2knn < 1.5 and rangeCondition == true){
-					bool hasCollision = map_->isInflatedOccupiedLine(n->pos, nearestNeighborNode->pos);
+					bool hasCollision = this->map_->isInflatedOccupiedLine(n->pos, nearestNeighborNode->pos);
 					if (hasCollision == false){
 						n->adjNodes.insert(nearestNeighborNode);
 						nearestNeighborNode->adjNodes.insert(n);
 					} 
 				}
 			}
+			cout << "end knn loop check" << endl;
 
 			if (n->adjNodes.size() != 0){
 				this->roadmap_->addRecord(n);
+				cout << "added to record" << endl;
 				double numVoxels = calculateUnknown(n);
 				n->numVoxels = numVoxels;
 			}
+			cout << "end the first iteration" << endl;
 		}
 		cout << "finished node connection" <<endl;
 
@@ -452,7 +463,10 @@ namespace globalPlanner{
 
 	void DEP::publishRoadmap(){
 		visualization_msgs::MarkerArray roadmapMarkers;
+
+		// PRM nodes and edges
 		int countPointNum = 0;
+		int countEdgeNum = 0;
 		for (size_t i=0; i<this->prmNodeVec_.size(); ++i){
 			std::shared_ptr<PRM::Node> n = this->prmNodeVec_[i];
 
@@ -477,7 +491,39 @@ namespace globalPlanner{
 			point.color.b = 0.0;
 			++countPointNum;
 			roadmapMarkers.markers.push_back(point);
+
+
+			// Edges
+			visualization_msgs::Marker line;
+			line.header.frame_id = "map";
+			line.type = visualization_msgs::Marker::LINE_LIST;
+			line.header.stamp = ros::Time::now();
+			for (std::shared_ptr<PRM::Node> adjNode : n->adjNodes){
+				geometry_msgs::Point p1, p2;
+				p1.x = n->pos(0);
+				p1.y = n->pos(1);
+				p1.z = n->pos(2);
+				p2.x = adjNode->pos(0);
+				p2.y = adjNode->pos(1);
+				p2.z = adjNode->pos(2);				
+				line.points.push_back(p1);
+				line.points.push_back(p2);
+				line.id = countEdgeNum;
+				line.scale.x = 0.05;
+				line.scale.y = 0.05;
+				line.scale.z = 0.05;
+				line.color.r = 0.0;
+				line.color.g = 1.0;
+				line.color.b = 0.0;
+				line.color.a = 1.0;
+				line.lifetime = ros::Duration(0.1);
+				roadmapMarkers.markers.push_back(line);
+				++countEdgeNum;
+			}
+			
+			
 		}
+
 		this->roadmapPub_.publish(roadmapMarkers);
 	}
 

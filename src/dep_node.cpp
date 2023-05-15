@@ -13,7 +13,10 @@ bool replan = true;
 void replanCB(const ros::TimerEvent&){
 	if (replan){
 		cout << "start planning." << endl;
+		ros::Time startTime = ros::Time::now();
 		bool replanSuccess = p->makePlan();
+		ros::Time endTime = ros::Time::now();
+		cout << "planning time: " << (endTime - startTime).toSec() << "s." << endl;
 		cout << "end planning." << endl;
 		if (replanSuccess){
 			replan = false; // only plan one time for test purpose.

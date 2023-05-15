@@ -81,6 +81,19 @@ namespace PRM{
 		std::vector<std::shared_ptr<Node>> badSide;
 		while (ptr != NULL){
 			double currDist = (n->pos - ptr->pos).norm(); 
+
+			// avoid finding the same node
+	 		if (ptr == n){
+				currDist = std::numeric_limits<double>::infinity();
+			}
+			// avoid finding node in this list
+			for (std::shared_ptr<Node> nt: this->notTarget_){
+				if (ptr == nt){
+					currDist = std::numeric_limits<double>::infinity();
+					break;
+				}
+			}
+
 			if (currDist < this->leastDistNN_){
 				bestNode = ptr;
 				this->leastDistNN_ = currDist;
@@ -137,18 +150,12 @@ namespace PRM{
 	// Returns the k-nearest neighbor in ascending order
 	std::vector<std::shared_ptr<Node>> KDTree::kNearestNeighbor(std::shared_ptr<Node> n, int num){
 		std::vector<std::shared_ptr<Node>> knn;
-		// cout << "================start================" <<endl;
 		for (int i=0; i<num; ++i){
-			// cout << "====================" << i << "=========================" << endl;
 			std::shared_ptr<Node> nearestNeighborNode = nearestNeighbor(n);
 			knn.push_back(nearestNeighborNode);
-			this->notTarget.push_back(nearestNeighborNode);
-			// cout << n->p.distance(nearest_neighbor->p) << endl;
-			// cout << "================================================" << endl;
+			this->notTarget_.push_back(nearestNeighborNode);
 		}
-		// cout << "================end================" <<endl;
-		// std::reverse(knn.begin(), knn.end());
-		this->notTarget.clear();
+		this->notTarget_.clear();
 		return knn;
 	}
 	

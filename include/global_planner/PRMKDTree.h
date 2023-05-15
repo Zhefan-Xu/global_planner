@@ -47,7 +47,7 @@ namespace PRM{
 		int size_;
 		std::shared_ptr<Node> root_;
 		double leastDistNN_ = std::numeric_limits<double>::infinity(); // temporarily save minimum distance for nearest neighbor search
-		std::vector<std::shared_ptr<Node>> notTarget;
+		std::vector<std::shared_ptr<Node>> notTarget_;
 		std::priority_queue<std::shared_ptr<Node>, std::vector<std::shared_ptr<Node>>, GainCompareNode> goalNodes;
 		std::vector<std::shared_ptr<Node>> record;
 		int totalNumUnknown;
