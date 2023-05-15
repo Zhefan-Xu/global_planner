@@ -182,52 +182,45 @@ namespace globalPlanner{
 	// for yaw angles in vector3d:  cos(yaw), sin(yaw), 0
 	// horz angle between yaw angle vector and direction (x y 0) vector for horz FOV
 	// Vert angle yaw angle vector and yaw angle vector (c s z) z is direction.z()
-	bool DEP::sensorFOVCondition(Eigen::Vector3d n){
-		Eigen::Vector3d direction = n - this->position_;
-		Eigen::Vector3d horizontalProjection;
-		horizontalProjection(0) = direction.x();
-		horizontalProjection(1) = direction.y();
-		horizontalProjection(2) = 0;
+	bool DEP::sensorFOVCondition(Eigen::Vector3d sample, Eigen::Vector3d pos){
+		Eigen::Vector3d direction = sample - pos;
 		Eigen::Vector3d yawAngleVector;
 		yawAngleVector(0) = cos(this->currYaw_);
 		yawAngleVector(1) = sin(this->currYaw_);
 		yawAngleVector(2) = 0;
-		double horizontalAngle = angleBetweenVectors(yawAngleVector, horizontalProjection);
-		if (horizontalAngle > this->horizontalFOV_/2){
-			return false;
-		}
 		Eigen::Vector3d verticalProjection;
 		verticalProjection(0) = cos(this->currYaw_);
 		verticalProjection(1) = sin(this->currYaw_);
 		verticalProjection(2) = direction.z();
 		double verticalAngle = angleBetweenVectors(yawAngleVector, verticalProjection);
 		if (verticalAngle > this->verticalFOV_/2){
+			// cout<<"angle: "<< verticalAngle <<endl;
+			// cout<<"vertical angle fail"<<endl;
 			return false;
 		}
 		double distance = direction.norm();
 		if (distance > this->dmax_){
+			// cout<<"distance: "<< distance <<endl;
+			// cout<<"distance fail"<<endl;
 			return false;
 		}
-		bool hasCollision = not this->map_->isInflatedFreeLine(n, this->position_);
+		bool hasCollision = this->map_->isInflatedOccupiedLine(sample, pos);
 		if (hasCollision == true){
+			// cout<<"collision fail"<<endl;
 			return false;
 		}
 		return true;
 	}
-
-	// map_->getRes
-	// loop to create vector of horizon points
-	// loop through horizon points for unknown points
 
 	double DEP::calculateUnknown(shared_ptr<PRM::Node> n){
 		// Position:
 		Eigen::Vector3d p = n->pos;
 
 		int countTotalUnknown = 0;
-		for (double z = p(2) - this->dmax_; z < p(2)+ this->dmax_; z += this->map_->getRes()){
-			for (double y = p(1)- this->dmax_; y < p(1)+ this->dmax_; y += this->map_->getRes()){
-				for (double x = p(0)- this->dmax_; x < p(0)+ this->dmax_; x += this->map_->getRes()){
-					// cout << "x: " << x << endl;
+		for (double z = p(2) - (this->dmax_/2); z < p(2)+ (this->dmax_/2); z += this->map_->getRes()){
+			for (double y = p(1)- (this->dmax_/2); y < p(1)+ (this->dmax_/2); y += this->map_->getRes()){
+				for (double x = p(0); x < p(0)+ this->dmax_; x += this->map_->getRes()){
+					//cout << "x: " << x << endl;
 					Eigen::Vector3d nodePoint;
 					nodePoint(0) = x;
 					nodePoint(1) = y;
@@ -237,8 +230,10 @@ namespace globalPlanner{
 					face(0) = direction.x();
 					face(1) = direction.y();
 					face(2) = 0;
-					if (sensorFOVCondition(nodePoint)){
+					if (sensorFOVCondition(nodePoint, p)){
+						// cout<<"in FOV"<<endl;
 						if (this->map_->isUnknown(nodePoint)){
+							// cout<<"Unknown" <<endl;
 							countTotalUnknown++;
 							for (double yaw: this->yaws){
 								Eigen::Vector3d yawDirection;

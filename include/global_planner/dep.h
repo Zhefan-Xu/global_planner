@@ -77,7 +77,7 @@ namespace globalPlanner{
 		// help function
 		std::shared_ptr<PRM::Node> randomConfigBBox(const Eigen::Vector3d& region);
 		bool sensorRangeCondition(const shared_ptr<PRM::Node> n1, shared_ptr<PRM::Node> n2);
-		bool sensorFOVCondition(const Eigen::Vector3d n);
+		bool sensorFOVCondition(const Eigen::Vector3d sample, Eigen::Vector3d pos);
 		double calculateUnknown(const shared_ptr<PRM::Node> n);
 
 	};
