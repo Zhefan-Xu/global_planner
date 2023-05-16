@@ -46,8 +46,9 @@ namespace globalPlanner{
 		bool odomReceived_ = false;
 		Eigen::Vector3d position_;
 		double currYaw_;
-		std::vector<double> yaws;
-		std::map<double, int> yawNumVoxels;
+		std::vector<double> yaws_;
+		std::map<double, int> yawNumVoxels_;
+		std::vector<std::shared_ptr<PRM::Node>> goalCandidates_;
 
 		// visualization data
 		std::vector<std::shared_ptr<PRM::Node>> prmNodeVec_;
@@ -77,7 +78,7 @@ namespace globalPlanner{
 		// help function
 		std::shared_ptr<PRM::Node> randomConfigBBox(const Eigen::Vector3d& region);
 		bool sensorRangeCondition(const shared_ptr<PRM::Node> n1, shared_ptr<PRM::Node> n2);
-		bool sensorFOVCondition(const Eigen::Vector3d n);
+		bool sensorFOVCondition(const Eigen::Vector3d sample, Eigen::Vector3d pos);
 		double calculateUnknown(const shared_ptr<PRM::Node> n);
 
 	};
