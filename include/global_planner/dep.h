@@ -10,7 +10,9 @@
 #include <map_manager/dynamicMap.h>
 #include <nav_msgs/Odometry.h>
 #include <global_planner/PRMKDTree.h>
+#include <global_planner/PRMAstar.h>
 #include <global_planner/utils.h>
+
 
 
 namespace globalPlanner{
@@ -49,6 +51,8 @@ namespace globalPlanner{
 		std::vector<double> yaws_;
 		std::map<double, int> yawNumVoxels_;
 		std::vector<std::shared_ptr<PRM::Node>> goalCandidates_;
+		std::vector<std::vector<std::shared_ptr<PRM::Node>>> candidatePaths_;
+		std::vector<std::shared_ptr<PRM::Node>> bestPath_;
 
 		// visualization data
 		std::vector<std::shared_ptr<PRM::Node>> prmNodeVec_;
@@ -65,7 +69,7 @@ namespace globalPlanner{
 		bool makePlan();
 		void buildRoadMap();
 		void getBestViewCandidates();
-		void findBestPath();
+		void findCandidatePath(const std::vector<std::shared_ptr<PRM::Node>>& goalCandidates);
 
 
 		// callback functions

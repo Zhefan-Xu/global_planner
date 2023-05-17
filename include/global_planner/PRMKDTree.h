@@ -24,8 +24,8 @@ namespace PRM{
 		std::shared_ptr<Node> right = NULL;
 		std::shared_ptr<Node> treeParent = NULL;
 		std::shared_ptr<Node> parent = NULL;
-		double g;
-		double f;
+		double g = std::numeric_limits<double>::infinity();
+		double f = std::numeric_limits<double>::infinity();
 		
 		bool newNode = false;
 		bool update = false;
@@ -35,6 +35,13 @@ namespace PRM{
 			this->pos = p;
 		}
 	};
+
+	struct CompareNode{
+		bool operator()(std::shared_ptr<Node> n1, std::shared_ptr<Node> n2){
+			return n1->f > n2->f;
+		}
+	};
+
 	struct GainCompareNode{
 		bool operator()(std::shared_ptr<Node> n1, std::shared_ptr<Node> n2){
 			return n1->numVoxels < n2->numVoxels;

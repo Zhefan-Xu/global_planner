@@ -157,9 +157,9 @@ namespace globalPlanner{
 		if (not this->odomReceived_) return false;
 		this->buildRoadMap();
 		return true;
-		//this->getBestViewCandidates();
+		// this->getBestViewCandidates();
 
-		//this->findBestPath();
+		//this->findCandidatePath();
 	}
 
 	bool DEP::sensorRangeCondition(shared_ptr<PRM::Node> n1, shared_ptr<PRM::Node> n2){
@@ -470,8 +470,19 @@ namespace globalPlanner{
 		}
 	}
 
-	void DEP::findBestPath(){
+	void DEP::findCandidatePath(const std::vector<std::shared_ptr<PRM::Node>>& goalCandidates){
+		// find nearest node of current location
+		std::shared_ptr<PRM::Node> currPos;
+		currPos->pos = this->position_;
+		std::shared_ptr<PRM::Node> start = this->roadmap_->nearestNeighbor(currPos);
 
+		std::vector<std::vector<std::shared_ptr<PRM::Node>>> candidatePaths;
+		for (std::shared_ptr<PRM::Node> goal : goalCandidates){
+			std::vector<std::shared_ptr<PRM::Node>> path = PRM::AStar(this->roadmap_, start, goal);
+			candidatePaths.push_back(path);
+		}
+
+		this->candidatePaths_ = candidatePaths;
 	}
 
 	void DEP::odomCB(const nav_msgs::OdometryConstPtr& odom){
