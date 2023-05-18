@@ -147,6 +147,7 @@ namespace PRM{
 		}
 		return bestNode;
 	}
+	
 	// Returns the k-nearest neighbor in ascending order
 	std::vector<std::shared_ptr<Node>> KDTree::kNearestNeighbor(std::shared_ptr<Node> n, int num){
 		std::vector<std::shared_ptr<Node>> knn;
@@ -157,30 +158,5 @@ namespace PRM{
 		}
 		this->notTarget_.clear();
 		return knn;
-	}
-	
-	void KDTree::addRecord(std::shared_ptr<Node> n){
-		this->record.push_back(n);
-	}
-	void KDTree::addGoalPQ(std::shared_ptr<Node> n){
-		this->goalNodes.push(n);
-	}
-	std::priority_queue<std::shared_ptr<Node>, std::vector<std::shared_ptr<Node>>, GainCompareNode> KDTree::getGoalNodes(){
-		return this->goalNodes;
-	}
-	std::vector<std::shared_ptr<Node>>& KDTree::getRecord(){
-		return this->record;
-	}
-	void KDTree::setMaxUnknown(int maxUnknown){
-		this->maxUnknown = maxUnknown;
-	}
-	int KDTree::getMaxUnknown(){
-		return this->maxUnknown;
-	}
-	void KDTree::setTotalUnknown(int totalNumUnknown){
-		this->totalNumUnknown = totalNumUnknown;
-	}
-	int KDTree::getTotalUnknown(){
-		return this->totalNumUnknown;
 	}
 }

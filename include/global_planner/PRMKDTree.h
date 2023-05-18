@@ -10,6 +10,7 @@
 #include <memory>
 #include <Eigen/Eigen>
 #include <limits>
+#include <unordered_map>
 #include <unordered_set>
 #include <queue>
 
@@ -18,8 +19,8 @@ using std::cout; using std::endl;
 namespace PRM{
 	struct Node{
 		Eigen::Vector3d pos;
-		double numVoxels;
-		std::map<double, int> yawNumVoxels;
+		int numVoxels = 0;
+		std::unordered_map<double, int> yawNumVoxels;
 		std::shared_ptr<Node> left = NULL;
 		std::shared_ptr<Node> right = NULL;
 		std::shared_ptr<Node> treeParent = NULL;
@@ -28,7 +29,6 @@ namespace PRM{
 		double f = std::numeric_limits<double>::infinity();
 		
 		bool newNode = false;
-		bool update = false;
 		std::unordered_set<std::shared_ptr<Node>> adjNodes;
 
 		Node (const Eigen::Vector3d& p){

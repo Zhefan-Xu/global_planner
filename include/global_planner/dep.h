@@ -43,19 +43,17 @@ namespace globalPlanner{
 		double dmax_;
 		int nnNum_;
 		double maxConnectDist_;
+		std::vector<double> yaws_;
 
 		// data
 		bool odomReceived_ = false;
 		Eigen::Vector3d position_;
 		double currYaw_;
-		std::vector<double> yaws_;
-		std::map<double, int> yawNumVoxels_;
+		std::vector<std::shared_ptr<PRM::Node>> prmNodeVec_; // all nodes		
 		std::vector<std::shared_ptr<PRM::Node>> goalCandidates_;
 		std::vector<std::vector<std::shared_ptr<PRM::Node>>> candidatePaths_;
 		std::vector<std::shared_ptr<PRM::Node>> bestPath_;
 
-		// visualization data
-		std::vector<std::shared_ptr<PRM::Node>> prmNodeVec_;
 
 	public:
 		DEP(const ros::NodeHandle& nh);
@@ -68,6 +66,7 @@ namespace globalPlanner{
 
 		bool makePlan();
 		void buildRoadMap();
+		void updateInformationGain();
 		void getBestViewCandidates();
 		void findCandidatePath(const std::vector<std::shared_ptr<PRM::Node>>& goalCandidates);
 
@@ -83,7 +82,7 @@ namespace globalPlanner{
 		std::shared_ptr<PRM::Node> randomConfigBBox(const Eigen::Vector3d& region);
 		bool sensorRangeCondition(const shared_ptr<PRM::Node> n1, shared_ptr<PRM::Node> n2);
 		bool sensorFOVCondition(const Eigen::Vector3d sample, Eigen::Vector3d pos);
-		double calculateUnknown(const shared_ptr<PRM::Node> n);
+		int calculateUnknown(const shared_ptr<PRM::Node>& n, std::unordered_map<double, int>& yawNumVoxels);
 
 	};
 }
