@@ -140,6 +140,32 @@ namespace globalPlanner{
 			cout << this->hint_ << ": Number of yaw angles is set to: " << yawNum << endl;
 		}
 
+		// minimum threshold of voxels
+		if (not this->nh_.getParam(this->ns_ + "/min_voxel_thresh", this->minVoxelThresh_)){
+			this->minVoxelThresh_ = 0.1;
+			cout << this->hint_ << ": No minimum threshold of voxels param. Use default: 0.1." << endl;
+		}
+		else{
+			cout << this->hint_ << ": Minimum threshold of voxels is set to: " << this->minVoxelThresh_ << endl;
+		}
+
+		// minimum number of goal candidates
+		if (not this->nh_.getParam(this->ns_ + "/min_goal_candidates", this->minCandidateNum_)){
+			this->minCandidateNum_ = 10;
+			cout << this->hint_ << ": No minimum number of goal candidates param. Use default: 10." << endl;
+		}
+		else{
+			cout << this->hint_ << ": Minimum number of goal candidates is set to: " << this->minCandidateNum_ << endl;
+		}
+
+		// maximum number of goal candidates
+		if (not this->nh_.getParam(this->ns_ + "/max_goal_candidates", this->maxCandidateNum_)){
+			this->maxCandidateNum_ = 30;
+			cout << this->hint_ << ": No maximum number of goal candidates param. Use default: 30." << endl;
+		}
+		else{
+			cout << this->hint_ << ": Maximum number of goal candidates is set to: " << this->maxCandidateNum_ << endl;
+		}
 	}
 
 	void DEP::initModules(){
@@ -150,6 +176,9 @@ namespace globalPlanner{
 	void DEP::registerPub(){
 		// roadmap visualization publisher
 		this->roadmapPub_ = this->nh_.advertise<visualization_msgs::MarkerArray>("/dep/roadmap", 10);
+
+		// candidate paths publisher
+		this->candidatePathPub_ = this->nh_.advertise<visualization_msgs::MarkerArray>("/dep/candidate_paths", 10);
 	}
 
 	void DEP::registerCallback(){
@@ -166,13 +195,17 @@ namespace globalPlanner{
 		this->buildRoadMap();
 
 		this->updateInformationGain();
-		return true;
-		// this->getBestViewCandidates();
+		
+		this->getBestViewCandidates(this->goalCandidates_);
 
-		//this->findCandidatePath();
+		cout << "finish best view candidate" << endl;
+
+		this->findCandidatePath(this->goalCandidates_);
+
+		return true;
 	}
 
-	bool DEP::sensorRangeCondition(shared_ptr<PRM::Node> n1, shared_ptr<PRM::Node> n2){
+	bool DEP::sensorRangeCondition(const shared_ptr<PRM::Node>& n1, const shared_ptr<PRM::Node>& n2){
 		Eigen::Vector3d direction = n2->pos - n1->pos;
 		Eigen::Vector3d projection;
 		projection(0) = direction.x();
@@ -192,31 +225,14 @@ namespace globalPlanner{
 	// for yaw angles in vector3d:  cos(yaw), sin(yaw), 0
 	// horz angle between yaw angle vector and direction (x y 0) vector for horz FOV
 	// Vert angle yaw angle vector and yaw angle vector (c s z) z is direction.z()
-	bool DEP::sensorFOVCondition(Eigen::Vector3d sample, Eigen::Vector3d pos){
+	bool DEP::sensorFOVCondition(const Eigen::Vector3d& sample, const Eigen::Vector3d& pos){
 		Eigen::Vector3d direction = sample - pos;
-		Eigen::Vector3d yawAngleVector;
-		yawAngleVector(0) = cos(this->currYaw_);
-		yawAngleVector(1) = sin(this->currYaw_);
-		yawAngleVector(2) = 0;
-		Eigen::Vector3d verticalProjection;
-		verticalProjection(0) = cos(this->currYaw_);
-		verticalProjection(1) = sin(this->currYaw_);
-		verticalProjection(2) = direction.z();
-		double verticalAngle = angleBetweenVectors(yawAngleVector, verticalProjection);
-		if (verticalAngle > this->verticalFOV_/2){
-			// cout<<"angle: "<< verticalAngle <<endl;
-			// cout<<"vertical angle fail"<<endl;
-			return false;
-		}
 		double distance = direction.norm();
 		if (distance > this->dmax_){
-			// cout<<"distance: "<< distance <<endl;
-			// cout<<"distance fail"<<endl;
 			return false;
 		}
 		bool hasCollision = this->map_->isInflatedOccupiedLine(sample, pos);
 		if (hasCollision == true){
-			// cout<<"collision fail"<<endl;
 			return false;
 		}
 		return true;
@@ -243,19 +259,16 @@ namespace globalPlanner{
 	}
 	void DEP::buildRoadMap(){
 		std::vector<std::shared_ptr<PRM::Node>> path;
-		//cout << "here" << endl;
 		bool saturate = false;
 		bool regionSaturate = false;
 		int countSample = 0;
 		std::shared_ptr<PRM::Node> n;
 		std::vector<std::shared_ptr<PRM::Node>> newNodes;
 		while (ros::ok() and not saturate){
-			//cout<<"sample"<<endl;
 			if (regionSaturate){
 				int countFailureGlobal = 0;
 				// Generate new node
 				while (ros::ok()){
-					//cout << "global failure count: " << countFailureGlobal << endl;
 					if (countFailureGlobal > this->sampleThresh_){
 						saturate = true;
 						break;
@@ -264,9 +277,7 @@ namespace globalPlanner{
 					// Check how close new node is other nodes
 					double distToNN;
 					if (this->roadmap_->getSize() != 0){
-						//cout << "find nearest neighbor" << endl;
 						shared_ptr<PRM::Node> nn = this->roadmap_->nearestNeighbor(n);
-						//cout << "find nearest neighbor end" << endl;
 						distToNN = (n->pos - nn->pos).norm();
 					}
 					else{
@@ -280,7 +291,6 @@ namespace globalPlanner{
 						newNodes.push_back(n);
 						this->prmNodeVec_.push_back(n);
 						++countSample;
-						// break;
 					}
 				}
 			}
@@ -288,7 +298,6 @@ namespace globalPlanner{
 				if (true){
 					int countFailureLocal = 0;
 					// Generate new node
-					//cout << "local sample" << endl;
 					while (ros::ok() and true){
 						//cout << "failure number: " << countFailureLocal << endl;
 						if (countFailureLocal > this->sampleThresh_){
@@ -296,20 +305,16 @@ namespace globalPlanner{
 							break;
 						}
 						n = this->randomConfigBBox(this->localRegionSize_);
-						//cout << "get new node" << endl;
 						// Check how close new node is other nodes
 						double distToNN;
 
 						if (this->roadmap_->getSize() != 0){
-							//cout << "find nearest neighbor" << endl;
 							shared_ptr<PRM::Node> nn = this->roadmap_->nearestNeighbor(n);
-							//cout << "find nearest neighbor end" << endl;
 							distToNN = (n->pos - nn->pos).norm();
 						}
 						else{
 							distToNN = this->distThresh_;
 						}
-						//cout << "distance to nn" << distToNN << endl;
 						if (distToNN < this->distThresh_){
 							++countFailureLocal;
 						}
@@ -318,8 +323,6 @@ namespace globalPlanner{
 							newNodes.push_back(n);
 							this->prmNodeVec_.push_back(n);
 							++countSample;
-							//cout << "new sample added" << endl;
-							// break;
 						}
 					}
 				}
@@ -366,19 +369,67 @@ namespace globalPlanner{
 		}
 	}
 
-	void DEP::getBestViewCandidates(){
+	void DEP::getBestViewCandidates(std::vector<std::shared_ptr<PRM::Node>>& goalCandidates){
+		goalCandidates.clear();
+		bool firstNode = true;
+		std::priority_queue<std::shared_ptr<PRM::Node>, std::vector<std::shared_ptr<PRM::Node>>, PRM::GainCompareNode> gainPQ;
 
+		// iterate through all points in the roadmap
+		for (std::shared_ptr<PRM::Node> n : this->prmNodeVec_){
+			gainPQ.push(n);
+		}
+
+		// select candidates from the priority queue
+		int maxNumVoxel = 0;
+		while (ros::ok()){
+			std::shared_ptr<PRM::Node> n = gainPQ.top();
+			
+			if (firstNode){
+				maxNumVoxel = n->numVoxels;
+				firstNode = false;
+			}
+
+			if (double(n->numVoxels) < double(maxNumVoxel) * this->minVoxelThresh_){
+				break;
+			}
+			goalCandidates.push_back(n);
+			gainPQ.pop();
+			
+			if (int(goalCandidates.size()) >= this->maxCandidateNum_){
+				break;
+			}
+		}
+
+		while (int(goalCandidates.size()) < this->minCandidateNum_){
+			if (gainPQ.size() == 0){
+				break;
+			}
+
+			if (int(goalCandidates.size()) >= this->maxCandidateNum_){
+				break;
+			}
+
+			std::shared_ptr<PRM::Node> n = gainPQ.top();
+			gainPQ.pop();			
+			goalCandidates.push_back(n);
+		}
+		cout << "goal candidate size is: " << goalCandidates.size() << endl;
 	}
 
 	void DEP::findCandidatePath(const std::vector<std::shared_ptr<PRM::Node>>& goalCandidates){
 		// find nearest node of current location
 		std::shared_ptr<PRM::Node> currPos;
-		currPos->pos = this->position_;
+		currPos.reset(new PRM::Node (this->position_));
+		cout << "start position is: " << this->position_.transpose() << endl;
 		std::shared_ptr<PRM::Node> start = this->roadmap_->nearestNeighbor(currPos);
+		cout << "find the nearest neighbor: " << start->pos.transpose() << endl;
 
 		std::vector<std::vector<std::shared_ptr<PRM::Node>>> candidatePaths;
 		for (std::shared_ptr<PRM::Node> goal : goalCandidates){
+			cout << "start A*" << endl;
 			std::vector<std::shared_ptr<PRM::Node>> path = PRM::AStar(this->roadmap_, start, goal);
+			path.insert(path.begin(), currPos);
+			cout << "end A*" << endl;
 			candidatePaths.push_back(path);
 		}
 
@@ -396,6 +447,10 @@ namespace globalPlanner{
 		if (this->prmNodeVec_.size() != 0){
 			this->publishRoadmap();
 		}
+
+		if (this->candidatePaths_.size() != 0){
+			this->publishCandidatePaths();
+		}
 	}
 
 	void DEP::publishRoadmap(){
@@ -410,7 +465,6 @@ namespace globalPlanner{
 
 			// Node point
 			visualization_msgs::Marker point;
-			point.ns = "node";
 			point.header.frame_id = "map";
 			point.header.stamp = ros::Time::now();
 			point.ns = "prm_point";
@@ -480,11 +534,97 @@ namespace globalPlanner{
 				++countEdgeNum;
 				roadmapMarkers.markers.push_back(line);
 			}
-			
-			
+		}
+
+		int countGoalCandidateNum = 0;
+		for (size_t i=0; i<this->goalCandidates_.size(); ++i){
+			std::shared_ptr<PRM::Node> n = this->goalCandidates_[i];
+
+			// Goal candidates
+			visualization_msgs::Marker goalCandidatePoint;
+			goalCandidatePoint.ns = "goal_candidate";
+			goalCandidatePoint.header.frame_id = "map";
+			goalCandidatePoint.header.stamp = ros::Time::now();
+			goalCandidatePoint.id = countGoalCandidateNum;
+			goalCandidatePoint.type = visualization_msgs::Marker::SPHERE;
+			goalCandidatePoint.action = visualization_msgs::Marker::ADD;
+			goalCandidatePoint.pose.position.x = n->pos(0);
+			goalCandidatePoint.pose.position.y = n->pos(1);
+			goalCandidatePoint.pose.position.z = n->pos(2);
+			goalCandidatePoint.lifetime = ros::Duration(0.1);
+			goalCandidatePoint.scale.x = 0.2;
+			goalCandidatePoint.scale.y = 0.2;
+			goalCandidatePoint.scale.z = 0.2;
+			goalCandidatePoint.color.a = 1.0;
+			goalCandidatePoint.color.r = 1.0;
+			goalCandidatePoint.color.g = 0.0;
+			goalCandidatePoint.color.b = 1.0;
+			++countGoalCandidateNum;
+			roadmapMarkers.markers.push_back(goalCandidatePoint);
 		}
 
 		this->roadmapPub_.publish(roadmapMarkers);
+	}
+
+	void DEP::publishCandidatePaths(){
+		visualization_msgs::MarkerArray candidatePathMarkers;
+		int countNodeNum = 0;
+		int countLineNum = 0;
+		for (std::vector<std::shared_ptr<PRM::Node>> path : this->candidatePaths_){
+			for (size_t i=0; i<path.size(); ++i){
+				std::shared_ptr<PRM::Node> n = path[i];
+				visualization_msgs::Marker point;
+				point.header.frame_id = "map";
+				point.header.stamp = ros::Time::now();
+				point.ns = "candidate_path_node";
+				point.id = countNodeNum;
+				point.type = visualization_msgs::Marker::SPHERE;
+				point.action = visualization_msgs::Marker::ADD;
+				point.pose.position.x = n->pos(0);
+				point.pose.position.y = n->pos(1);
+				point.pose.position.z = n->pos(2);
+				point.lifetime = ros::Duration(0.1);
+				point.scale.x = 0.15;
+				point.scale.y = 0.15;
+				point.scale.z = 0.15;
+				point.color.a = 1.0;
+				point.color.r = 1.0;
+				point.color.g = 1.0;
+				point.color.b = 0.0;
+				++countNodeNum;
+				candidatePathMarkers.markers.push_back(point);
+
+				if (i<path.size()-1){
+					std::shared_ptr<PRM::Node> nNext = path[i+1];
+					visualization_msgs::Marker line;
+					line.ns = "candidate_path";
+					line.header.frame_id = "map";
+					line.type = visualization_msgs::Marker::LINE_LIST;
+					line.header.stamp = ros::Time::now();
+					geometry_msgs::Point p1, p2;
+					p1.x = n->pos(0);
+					p1.y = n->pos(1);
+					p1.z = n->pos(2);
+					p2.x = nNext->pos(0);
+					p2.y = nNext->pos(1);
+					p2.z = nNext->pos(2);				
+					line.points.push_back(p1);
+					line.points.push_back(p2);
+					line.id = countLineNum;
+					line.scale.x = 0.05;
+					line.scale.y = 0.05;
+					line.scale.z = 0.05;
+					line.color.r = 0.0;
+					line.color.g = 0.0;
+					line.color.b = 0.0;
+					line.color.a = 1.0;
+					line.lifetime = ros::Duration(0.1);
+					++countLineNum;
+					candidatePathMarkers.markers.push_back(line);				
+				}
+			}
+		}
+		this->candidatePathPub_.publish(candidatePathMarkers);		
 	}
 
 
@@ -516,27 +656,19 @@ namespace globalPlanner{
 		// Position:
 		Eigen::Vector3d p = n->pos;
 
+		double zRange = this->dmax_ * tan(this->verticalFOV_/2.0);
 		int countTotalUnknown = 0;
-		for (double z = p(2) - (this->dmax_/2); z < p(2)+ (this->dmax_/2); z += this->map_->getRes()){
-			for (double y = p(1)- (this->dmax_/2); y < p(1)+ (this->dmax_/2); y += this->map_->getRes()){
-				for (double x = p(0); x < p(0)+ this->dmax_; x += this->map_->getRes()){
-					Eigen::Vector3d nodePoint;
-					nodePoint(0) = x;
-					nodePoint(1) = y;
-					nodePoint(2) = z;
-					Eigen::Vector3d direction = nodePoint - p;
-					Eigen::Vector3d face;
-					face(0) = direction.x();
-					face(1) = direction.y();
-					face(2) = 0;
-					if (sensorFOVCondition(nodePoint, p)){
-						if (this->map_->isUnknown(nodePoint)){
-							countTotalUnknown++;
+		for (double z = p(2) - zRange; z < p(2) + zRange; z += this->map_->getRes()){
+			for (double y = p(1) - this->dmax_; y < p(1)+ this->dmax_; y += this->map_->getRes()){
+				for (double x = p(0) - this->dmax_; x < p(0) + this->dmax_; x += this->map_->getRes()){
+					Eigen::Vector3d nodePoint (x, y, z);
+					if (this->map_->isUnknown(nodePoint)){
+						if (this->sensorFOVCondition(nodePoint, p)){
+							++countTotalUnknown;
 							for (double yaw: this->yaws_){
-								Eigen::Vector3d yawDirection;
-								yawDirection(0) = cos(yaw);
-								yawDirection(1) = sin(yaw);
-								yawDirection(2) = 0;
+								Eigen::Vector3d yawDirection (cos(yaw), sin(yaw), 0);
+								Eigen::Vector3d direction = nodePoint - p;
+								Eigen::Vector3d face (direction(0), direction(1), 0);
 								double angleToYaw = angleBetweenVectors(face, yawDirection);
 								if (angleToYaw <= this->horizontalFOV_/2){
 									yawNumVoxels[yaw] += 1;

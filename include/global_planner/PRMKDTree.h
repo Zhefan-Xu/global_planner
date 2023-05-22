@@ -55,10 +55,7 @@ namespace PRM{
 		std::shared_ptr<Node> root_;
 		double leastDistNN_ = std::numeric_limits<double>::infinity(); // temporarily save minimum distance for nearest neighbor search
 		std::vector<std::shared_ptr<Node>> notTarget_;
-		std::priority_queue<std::shared_ptr<Node>, std::vector<std::shared_ptr<Node>>, GainCompareNode> goalNodes;
-		std::vector<std::shared_ptr<Node>> record;
-		int totalNumUnknown;
-		int maxUnknown;
+
 	public:
 		KDTree();
 		void clear();
@@ -70,14 +67,6 @@ namespace PRM{
 			                                  std::shared_ptr<Node> bestNode=NULL,
 			                                  int depth=0);
 		std::vector<std::shared_ptr<Node>> kNearestNeighbor(std::shared_ptr<Node> n, int num);
-		void addRecord(std::shared_ptr<Node>);
-		void addGoalPQ(std::shared_ptr<Node>);
-		std::priority_queue<std::shared_ptr<Node>, std::vector<std::shared_ptr<Node>>, GainCompareNode> getGoalNodes();
-		std::vector<std::shared_ptr<Node>>& getRecord();
-		void setTotalUnknown(int totalNumUnknown);
-		int getTotalUnknown();
-		void setMaxUnknown(int maxUnknown);
-		int getMaxUnknown();
 	};
 }
 

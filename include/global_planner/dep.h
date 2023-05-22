@@ -23,6 +23,7 @@ namespace globalPlanner{
 
 		ros::NodeHandle nh_;
 		ros::Publisher roadmapPub_;
+		ros::Publisher candidatePathPub_;
 		ros::Subscriber odomSub_;
 		ros::Timer visTimer_;
 
@@ -44,6 +45,9 @@ namespace globalPlanner{
 		int nnNum_;
 		double maxConnectDist_;
 		std::vector<double> yaws_;
+		double minVoxelThresh_;
+		int minCandidateNum_;
+		int maxCandidateNum_;
 
 		// data
 		bool odomReceived_ = false;
@@ -67,7 +71,7 @@ namespace globalPlanner{
 		bool makePlan();
 		void buildRoadMap();
 		void updateInformationGain();
-		void getBestViewCandidates();
+		void getBestViewCandidates(std::vector<std::shared_ptr<PRM::Node>>& goalCandidates);
 		void findCandidatePath(const std::vector<std::shared_ptr<PRM::Node>>& goalCandidates);
 
 
@@ -77,11 +81,12 @@ namespace globalPlanner{
 
 		// visualization functions
 		void publishRoadmap();
+		void publishCandidatePaths();
 
 		// help function
 		std::shared_ptr<PRM::Node> randomConfigBBox(const Eigen::Vector3d& region);
-		bool sensorRangeCondition(const shared_ptr<PRM::Node> n1, shared_ptr<PRM::Node> n2);
-		bool sensorFOVCondition(const Eigen::Vector3d sample, Eigen::Vector3d pos);
+		bool sensorRangeCondition(const shared_ptr<PRM::Node>& n1, const shared_ptr<PRM::Node>& n2);
+		bool sensorFOVCondition(const Eigen::Vector3d& sample, const Eigen::Vector3d& pos);
 		int calculateUnknown(const shared_ptr<PRM::Node>& n, std::unordered_map<double, int>& yawNumVoxels);
 
 	};

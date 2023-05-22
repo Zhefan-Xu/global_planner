@@ -9,3 +9,10 @@ horizontal_FOV: 1.57
 vertical_FOV: 1.57
 dmin: 0
 dmax: 1.0
+
+num_yaw_angles: 32
+
+# Goal Candidate
+min_voxel_thresh: 0.5
+min_goal_candidates: 3
+max_goal_candidates: 5
