@@ -166,6 +166,15 @@ namespace globalPlanner{
 		else{
 			cout << this->hint_ << ": Maximum number of goal candidates is set to: " << this->maxCandidateNum_ << endl;
 		}
+
+		// Information gain update  distance
+		if (not this->nh_.getParam(this->ns_ + "/information_gain_update_distance", this->updateDist_)){
+			this->updateDist_ = 1.0;
+			cout << this->hint_ << ": No information gain update distance param. Use default: 1.0m." << endl;
+		}
+		else{
+			cout << this->hint_ << ": Information gain update distance is set to: " << this->updateDist_ << endl;
+		}
 	}
 
 	void DEP::initModules(){
@@ -364,18 +373,32 @@ namespace globalPlanner{
 		// two types of nodes need update:
 		// 1. new nodes
 		// 2. nodes close to the historical trajectory
-		for (std::shared_ptr<PRM::Node> n : this->prmNodeVec_){
+		std::unordered_set<std::shared_ptr<PRM::Node>> updateSet;
+		for (std::shared_ptr<PRM::Node> n : this->prmNodeVec_){ // new nodes
 			if (n->newNode == true){// 1. new nodes
-				std::unordered_map<double, int> yawNumVoxels;
-				int unknownVoxelNum = this->calculateUnknown(n, yawNumVoxels);
-				n->numVoxels = unknownVoxelNum;
-				n->yawNumVoxels = yawNumVoxels;
-				n->newNode = false;
-			}
-			else{// 2. trajectory nodes (TODO)
-
+				updateSet.insert(n);
 			}	
 		}
+
+		for (Eigen::Vector3d histPos : this->histTraj_){ // traj update nodes
+			std::shared_ptr<PRM::Node> histN;
+			histN.reset(new PRM::Node(histPos));
+			std::vector<std::shared_ptr<PRM::Node>> nns = this->roadmap_->kNearestNeighbor(histN, 10);
+			for (std::shared_ptr<PRM::Node> nn : nns){
+				if ((nn->pos - histN->pos).norm() <= this->updateDist_){
+					updateSet.insert(nn);
+				}
+			}
+		}
+
+		for (std::shared_ptr<PRM::Node> updateN : updateSet){ // update information gain
+			std::unordered_map<double, int> yawNumVoxels;
+			int unknownVoxelNum = this->calculateUnknown(updateN, yawNumVoxels);
+			updateN->numVoxels = unknownVoxelNum;
+			updateN->yawNumVoxels = yawNumVoxels;
+			updateN->newNode = false;
+		}
+		this->histTraj_.clear(); // clear history
 	}
 
 	void DEP::getBestViewCandidates(std::vector<std::shared_ptr<PRM::Node>>& goalCandidates){
@@ -470,6 +493,23 @@ namespace globalPlanner{
 		this->position_ = Eigen::Vector3d (this->odom_.pose.pose.position.x, this->odom_.pose.pose.position.y, this->odom_.pose.pose.position.z);
 		this->currYaw_ = globalPlanner::rpy_from_quaternion(this->odom_.pose.pose.orientation);
 		this->odomReceived_ = true;
+
+		if (this->histTraj_.size() == 0){
+			this->histTraj_.push_back(this->position_);
+		}
+		else{
+			Eigen::Vector3d lastPos = this->histTraj_.back();
+			double dist = (this->position_ - lastPos).norm();
+			if (dist >= 0.5){
+				if (this->histTraj_.size() >= 100){
+					this->histTraj_.pop_front();
+					this->histTraj_.push_back(this->position_);
+				}
+				else{
+					this->histTraj_.push_back(this->position_);
+				}
+			}
+		}
 	}
 
 	void DEP::visCB(const ros::TimerEvent&){

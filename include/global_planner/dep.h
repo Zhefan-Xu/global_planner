@@ -49,11 +49,13 @@ namespace globalPlanner{
 		double minVoxelThresh_;
 		int minCandidateNum_;
 		int maxCandidateNum_;
+		double updateDist_;
 
 		// data
 		bool odomReceived_ = false;
 		Eigen::Vector3d position_;
 		double currYaw_;
+		std::deque<Eigen::Vector3d> histTraj_; // historic trajectory for information gain update 
 		std::vector<std::shared_ptr<PRM::Node>> prmNodeVec_; // all nodes		
 		std::vector<std::shared_ptr<PRM::Node>> goalCandidates_;
 		std::vector<std::vector<std::shared_ptr<PRM::Node>>> candidatePaths_;
