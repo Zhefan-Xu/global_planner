@@ -179,6 +179,9 @@ namespace globalPlanner{
 
 		// candidate paths publisher
 		this->candidatePathPub_ = this->nh_.advertise<visualization_msgs::MarkerArray>("/dep/candidate_paths", 10);
+
+		// best path publisher
+		this->bestPathPub_ = this->nh_.advertise<visualization_msgs::MarkerArray>("/dep/best_paths", 10);
 	}
 
 	void DEP::registerCallback(){
@@ -201,6 +204,12 @@ namespace globalPlanner{
 		cout << "finish best view candidate" << endl;
 
 		this->findCandidatePath(this->goalCandidates_);
+
+		cout << "finish candidate path" << endl;
+
+		this->findBestPath(this->candidatePaths_);
+
+		cout << "found best path" << endl;
 
 		return true;
 	}
@@ -309,7 +318,7 @@ namespace globalPlanner{
 						double distToNN;
 
 						if (this->roadmap_->getSize() != 0){
-							shared_ptr<PRM::Node> nn = this->roadmap_->nearestNeighbor(n);
+							std::shared_ptr<PRM::Node> nn = this->roadmap_->nearestNeighbor(n);
 							distToNN = (n->pos - nn->pos).norm();
 						}
 						else{
@@ -436,6 +445,26 @@ namespace globalPlanner{
 		this->candidatePaths_ = candidatePaths;
 	}
 
+	void DEP::findBestPath(const std::vector<std::vector<std::shared_ptr<PRM::Node>>>& candidatePaths){
+		// find path highest unknown
+		std::vector<std::shared_ptr<PRM::Node>> bestPath;
+		double highestScore = 0;
+		for (std::vector<std::shared_ptr<PRM::Node>> path : candidatePaths){
+			int unknownVoxel = 0;
+			for (int i=0; i <= path.size()-1; i++){
+				unknownVoxel += path[i]->numVoxels;
+			}
+			//cout << "voxel count done" << endl;
+			double distance = calculatePathLength(path);
+			//cout << "distance calc" <<endl;
+			if (unknownVoxel/distance > highestScore){
+				highestScore = unknownVoxel/distance;
+				bestPath = path;
+			}
+		}
+		this->bestPath_ = bestPath;
+	}
+
 	void DEP::odomCB(const nav_msgs::OdometryConstPtr& odom){
 		this->odom_ = *odom;
 		this->position_ = Eigen::Vector3d (this->odom_.pose.pose.position.x, this->odom_.pose.pose.position.y, this->odom_.pose.pose.position.z);
@@ -450,6 +479,10 @@ namespace globalPlanner{
 
 		if (this->candidatePaths_.size() != 0){
 			this->publishCandidatePaths();
+		}
+
+		if (this->bestPath_.size()!=0){
+			this->publishBestPath();
 		}
 	}
 
@@ -611,9 +644,9 @@ namespace globalPlanner{
 					line.points.push_back(p1);
 					line.points.push_back(p2);
 					line.id = countLineNum;
-					line.scale.x = 0.05;
-					line.scale.y = 0.05;
-					line.scale.z = 0.05;
+					line.scale.x = 0.1;
+					line.scale.y = 0.1;
+					line.scale.z = 0.1;
 					line.color.r = 0.0;
 					line.color.g = 0.0;
 					line.color.b = 0.0;
@@ -626,7 +659,65 @@ namespace globalPlanner{
 		}
 		this->candidatePathPub_.publish(candidatePathMarkers);		
 	}
+	
+	void DEP::publishBestPath(){
+		visualization_msgs::MarkerArray bestPathMarkers;
+		int countNodeNum = 0;
+		int countLineNum = 0;
+		for (size_t i=0; i<this->bestPath_.size(); ++i){
+			std::shared_ptr<PRM::Node> n = this->bestPath_[i];
+			visualization_msgs::Marker point;
+			point.header.frame_id = "map";
+			point.header.stamp = ros::Time::now();
+			point.ns = "best_path_node";
+			point.id = countNodeNum;
+			point.type = visualization_msgs::Marker::SPHERE;
+			point.action = visualization_msgs::Marker::ADD;
+			point.pose.position.x = n->pos(0);
+			point.pose.position.y = n->pos(1);
+			point.pose.position.z = n->pos(2);
+			point.lifetime = ros::Duration(0.1);
+			point.scale.x = 0.2;
+			point.scale.y = 0.2;
+			point.scale.z = 0.2;
+			point.color.a = 1.0;
+			point.color.r = 1.0;
+			point.color.g = 1.0;
+			point.color.b = 1.0;
+			++countNodeNum;
+			bestPathMarkers.markers.push_back(point);
 
+			if (i<this->bestPath_.size()-1){
+				std::shared_ptr<PRM::Node> nNext = this->bestPath_[i+1];
+				visualization_msgs::Marker line;
+				line.ns = "best_path";
+				line.header.frame_id = "map";
+				line.type = visualization_msgs::Marker::LINE_LIST;
+				line.header.stamp = ros::Time::now();
+				geometry_msgs::Point p1, p2;
+				p1.x = n->pos(0);
+				p1.y = n->pos(1);
+				p1.z = n->pos(2);
+				p2.x = nNext->pos(0);
+				p2.y = nNext->pos(1);
+				p2.z = nNext->pos(2);				
+				line.points.push_back(p1);
+				line.points.push_back(p2);
+				line.id = countLineNum;
+				line.scale.x = 0.2;
+				line.scale.y = 0.2;
+				line.scale.z = 0.2;
+				line.color.r = 1.0;
+				line.color.g = 0.0;
+				line.color.b = 0.0;
+				line.color.a = 1.0;
+				line.lifetime = ros::Duration(0.1);
+				++countLineNum;
+				bestPathMarkers.markers.push_back(line);				
+			}
+		}
+	this->bestPathPub_.publish(bestPathMarkers);		
+	}
 
 
 	// TODO: add map range
@@ -680,5 +771,14 @@ namespace globalPlanner{
 			}
 		}
 		return countTotalUnknown;
+	}
+	double DEP::calculatePathLength(const std::vector<shared_ptr<PRM::Node>> path){
+		int idx1 = 0;
+		double length = 0;
+		for (int idx2=1; idx2<=path.size()-1; ++idx2){
+			length += (path[idx2]->pos - path[idx1]->pos).norm();
+			++idx1;
+		}
+		return length;
 	}
 }
