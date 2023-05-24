@@ -27,6 +27,7 @@ namespace globalPlanner{
 		double sampleRegion_[6];
 		double maxShortcutThresh_;
 		bool ignoreUnknown_;
+		bool passGoalCheck_;
 
 		std::vector<KDTree::Point<N>> currPlan_;
 
@@ -132,6 +133,15 @@ namespace globalPlanner{
 			cout << "[Global Planner INFO]: Ignore unknown: " << this->ignoreUnknown_ << "." << endl;
 		}
 
+		// goal check
+		if (not this->nh_.getParam("rrt/pass_goal_check", this->passGoalCheck_)){
+			this->passGoalCheck_ = false;
+			cout << "[Global Planner INFO]: No pass goal check Parameter. Use default: false." << endl;
+		}	
+		else{
+			cout << "[Global Planner INFO]: Pass goal check: " << this->passGoalCheck_ << "." << endl;
+		}
+
 	}
 
 	template <std::size_t N>
@@ -172,11 +182,13 @@ namespace globalPlanner{
 	template <std::size_t N>
 	void rrtOccMap<N>::makePlan(std::vector<KDTree::Point<N>>& plan){
 		Eigen::Vector3d qGoal = KDTree::point2Eig(this->goal_);
-		if (not this->ignoreUnknown_){
-			if (this->map_->isUnknown(qGoal)){
-				plan.push_back(this->start_);
-				cout << "[Global Planner]: Goal is unknown. Please change your goal." << endl;
-				return;
+		if (not this->passGoalCheck_){
+			if (not this->ignoreUnknown_){
+				if (this->map_->isUnknown(qGoal)){
+					plan.push_back(this->start_);
+					cout << "[Global Planner]: Goal is unknown. Please change your goal." << endl;
+					return;
+				}
 			}
 		}
 
@@ -225,12 +237,12 @@ namespace globalPlanner{
 			Eigen::Vector3d qNearEig = KDTree::point2Eig(qNear);
 			// if (this->hasNoEdge(qNear, qNew) and not this->map_->isInflatedOccupiedLine(qNewEig, qNearEig)){
 			bool lineValidCheck;
-			if (this->ignoreUnknown_){
-				lineValidCheck = not this->map_->isInflatedOccupiedLine(qNewEig, qNearEig);
-			}
-			else{
-				lineValidCheck = this->map_->isInflatedFreeLine(qNewEig, qNearEig);
-			}
+			// if (this->ignoreUnknown_){
+			lineValidCheck = not this->map_->isInflatedOccupiedLine(qNewEig, qNearEig);
+			// }
+			// else{
+				// lineValidCheck = this->map_->isInflatedFreeLine(qNewEig, qNearEig);
+			// }
 			if (this->hasNoEdge(qNear, qNew) and lineValidCheck){
 				this->addVertex(qNew);
 				this->addEdge(qNear, qNew);
@@ -324,12 +336,12 @@ namespace globalPlanner{
 			Eigen::Vector3d pos2 = KDTree::point2Eig(p2);
 			// if (not this->map_->isInflatedOccupiedLine(pos1, pos2) and KDTree:: Distance(p1, p2) <= this->maxShortcutThresh_){
 			bool lineValidCheck;
-			if (this->ignoreUnknown_){
-				lineValidCheck = not this->map_->isInflatedOccupiedLine(pos1, pos2);
-			}
-			else{
-				lineValidCheck = this->map_->isInflatedFreeLine(pos1, pos2);
-			}
+			// if (this->ignoreUnknown_){
+			lineValidCheck = not this->map_->isInflatedOccupiedLine(pos1, pos2);
+			// }
+			// else{
+				// lineValidCheck = this->map_->isInflatedFreeLine(pos1, pos2);
+			// }
 			if (lineValidCheck and KDTree:: Distance(p1, p2) <= this->maxShortcutThresh_){
 
 				if (ptr2 >= plan.size()-1){
@@ -358,12 +370,12 @@ namespace globalPlanner{
 			Eigen::Vector3d nextPEig = KDTree::point2Eig(nextP);
 			// if (this->map_->isInflatedOccupiedLine(currPEig, nextPEig)){
 			bool lineValidCheck;
-			if (this->ignoreUnknown_){
-				lineValidCheck = not this->map_->isInflatedOccupiedLine(currPEig, nextPEig);
-			}
-			else{
-				lineValidCheck = this->map_->isInflatedFreeLine(currPEig, nextPEig);
-			}
+			// if (this->ignoreUnknown_){
+			lineValidCheck = not this->map_->isInflatedOccupiedLine(currPEig, nextPEig);
+			// }
+			// else{
+				// lineValidCheck = this->map_->isInflatedFreeLine(currPEig, nextPEig);
+			// }
 			if (not lineValidCheck){
 				return false;
 			}
