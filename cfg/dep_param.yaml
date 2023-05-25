@@ -1,6 +1,8 @@
 odom_topic: "/CERLAB/quadcopter/odom"
-local_region_size: [5, 5, 5]
-global_region_size: [10, 10, 10]
+local_region_min: [-5, -5, -2]
+local_region_max: [5, 5, 2]
+global_region_min: [-20, -20, 0]
+global_region_max: [20, 20, 3]
 sampleThresh: 50
 distThresh: 0.8
 

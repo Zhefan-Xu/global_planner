@@ -35,8 +35,8 @@ namespace globalPlanner{
 
 		// parameters
 		std::string odomTopic_;
-		Eigen::Vector3d globalRegionSize_;
-		Eigen::Vector3d localRegionSize_;
+		Eigen::Vector3d globalRegionMin_, globalRegionMax_;
+		Eigen::Vector3d localRegionMin_, localRegionMax_;
 		int sampleThresh_;
 		double distThresh_;
 		double horizontalFOV_;
@@ -89,7 +89,7 @@ namespace globalPlanner{
 		void publishBestPath();
 
 		// help function
-		std::shared_ptr<PRM::Node> randomConfigBBox(const Eigen::Vector3d& region);
+		std::shared_ptr<PRM::Node> randomConfigBBox(const Eigen::Vector3d& minRegion, const Eigen::Vector3d& maxRegion);
 		bool sensorRangeCondition(const shared_ptr<PRM::Node>& n1, const shared_ptr<PRM::Node>& n2);
 		bool sensorFOVCondition(const Eigen::Vector3d& sample, const Eigen::Vector3d& pos);
 		int calculateUnknown(const shared_ptr<PRM::Node>& n, std::unordered_map<double, int>& yawNumVoxels);

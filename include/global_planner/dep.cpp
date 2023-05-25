@@ -32,33 +32,64 @@ namespace globalPlanner{
 			cout << this->hint_ << ": Odom topic: " << this->odomTopic_ << endl;
 		}
 
-		// local sample region size
-		std::vector<double> localRegionSizeTemp;	
-		if (not this->nh_.getParam(this->ns_ + "/local_region_size", localRegionSizeTemp)){
-			this->localRegionSize_(0) = 1.0;
-			this->localRegionSize_(1) = 1.0;
-			this->localRegionSize_(2) = 1.0;
-			cout << this->hint_ << ": No local region size param. Use default: [1 1 1]" <<endl;
+		// local sample region min
+		std::vector<double> localRegionMinTemp;	
+		if (not this->nh_.getParam(this->ns_ + "/local_region_min", localRegionMinTemp)){
+			this->localRegionMin_(0) = -5.0;
+			this->localRegionMin_(1) = -5.0;
+			this->localRegionMin_(2) = -2.0;
+			cout << this->hint_ << ": No local region min param. Use default: [-5 -5 -2]" <<endl;
 		}
 		else{
-			this->localRegionSize_(0) = localRegionSizeTemp[0];
-			this->localRegionSize_(1) = localRegionSizeTemp[1];
-			this->localRegionSize_(2) = localRegionSizeTemp[2];
-			cout << this->hint_ << ": Local Region Size: " << this->localRegionSize_[0] <<" " <<this->localRegionSize_[1]<<" "<< this->localRegionSize_[2]<< endl;
+			this->localRegionMin_(0) = localRegionMinTemp[0];
+			this->localRegionMin_(1) = localRegionMinTemp[1];
+			this->localRegionMin_(2) = localRegionMinTemp[2];
+			cout << this->hint_ << ": Local Region Min: " << this->localRegionMin_[0] <<" " <<this->localRegionMin_[1]<<" "<< this->localRegionMin_[2]<< endl;
 		}
-		// global sample region size
-		std::vector<double> globalRegionSizeTemp;	
-		if (not this->nh_.getParam(this->ns_ + "/global_region_size", globalRegionSizeTemp)){
-			this->globalRegionSize_(0) = 5.0;
-			this->globalRegionSize_(1) = 5.0;
-			this->globalRegionSize_(2) = 5.0;
-			cout << this->hint_ << ": No global region size param. Use default: [5 5 5]" <<endl;
+
+		// local sample region max
+		std::vector<double> localRegionMaxTemp;	
+		if (not this->nh_.getParam(this->ns_ + "/local_region_max", localRegionMaxTemp)){
+			this->localRegionMax_(0) = 5.0;
+			this->localRegionMax_(1) = 5.0;
+			this->localRegionMax_(2) = 2.0;
+			cout << this->hint_ << ": No local region max param. Use default: [5 5 2]" <<endl;
 		}
 		else{
-			this->globalRegionSize_(0) = globalRegionSizeTemp[0];
-			this->globalRegionSize_(1) = globalRegionSizeTemp[1];
-			this->globalRegionSize_(2) = globalRegionSizeTemp[2];
-			cout << this->hint_ << ": Global Region Size: " << this->globalRegionSize_[0] <<" "<< this->globalRegionSize_[1]<<" "<< this->globalRegionSize_[2]<< endl;
+			this->localRegionMax_(0) = localRegionMaxTemp[0];
+			this->localRegionMax_(1) = localRegionMaxTemp[1];
+			this->localRegionMax_(2) = localRegionMaxTemp[2];
+			cout << this->hint_ << ": Local Region Max: " << this->localRegionMax_[0] <<" " <<this->localRegionMax_[1]<<" "<< this->localRegionMax_[2]<< endl;
+		}
+
+		// global sample region min
+		std::vector<double> globalRegionMinTemp;	
+		if (not this->nh_.getParam(this->ns_ + "/global_region_min", globalRegionMinTemp)){
+			this->globalRegionMin_(0) = -20.0;
+			this->globalRegionMin_(1) = -20.0;
+			this->globalRegionMin_(2) = 0.0;
+			cout << this->hint_ << ": No global region min param. Use default: [-20 -20 0]" <<endl;
+		}
+		else{
+			this->globalRegionMin_(0) = globalRegionMinTemp[0];
+			this->globalRegionMin_(1) = globalRegionMinTemp[1];
+			this->globalRegionMin_(2) = globalRegionMinTemp[2];
+			cout << this->hint_ << ": Global Region Min: " << this->globalRegionMin_[0] <<" "<< this->globalRegionMin_[1]<<" "<< this->globalRegionMin_[2]<< endl;
+		}
+
+		// global sample region max
+		std::vector<double> globalRegionMaxTemp;	
+		if (not this->nh_.getParam(this->ns_ + "/global_region_max", globalRegionMaxTemp)){
+			this->globalRegionMax_(0) = 20.0;
+			this->globalRegionMax_(1) = 20.0;
+			this->globalRegionMax_(2) = 3.0;
+			cout << this->hint_ << ": No global region max param. Use default: [20 20 3]" <<endl;
+		}
+		else{
+			this->globalRegionMax_(0) = globalRegionMaxTemp[0];
+			this->globalRegionMax_(1) = globalRegionMaxTemp[1];
+			this->globalRegionMax_(2) = globalRegionMaxTemp[2];
+			cout << this->hint_ << ": Global Region Max: " << this->globalRegionMax_[0] <<" "<< this->globalRegionMax_[1]<<" "<< this->globalRegionMax_[2]<< endl;
 		}
 		
 		// Sample Threshold Value
@@ -291,7 +322,7 @@ namespace globalPlanner{
 						saturate = true;
 						break;
 					}
-					n = this->randomConfigBBox(this->globalRegionSize_);
+					n = this->randomConfigBBox(this->globalRegionMin_, this->globalRegionMax_);
 					// Check how close new node is other nodes
 					double distToNN;
 					if (this->roadmap_->getSize() != 0){
@@ -322,7 +353,9 @@ namespace globalPlanner{
 							regionSaturate = true;
 							break;
 						}
-						n = this->randomConfigBBox(this->localRegionSize_);
+						Eigen::Vector3d localSampleMin = this->position_+this->localRegionMin_;
+						Eigen::Vector3d localSampleMax = this->position_+this->localRegionMax_;
+						n = this->randomConfigBBox(localSampleMin, localSampleMax);
 						// Check how close new node is other nodes
 						double distToNN;
 
@@ -474,7 +507,7 @@ namespace globalPlanner{
 		double highestScore = 0;
 		for (std::vector<std::shared_ptr<PRM::Node>> path : candidatePaths){
 			int unknownVoxel = 0;
-			for (int i=0; i <= path.size()-1; i++){
+			for (size_t i=0; i <= path.size()-1; i++){
 				unknownVoxel += path[i]->numVoxels;
 			}
 			//cout << "voxel count done" << endl;
@@ -761,17 +794,24 @@ namespace globalPlanner{
 
 
 	// TODO: add map range
-	std::shared_ptr<PRM::Node> DEP::randomConfigBBox(const Eigen::Vector3d& region){
-		Eigen::Vector3d minRegion, maxRegion;
+	std::shared_ptr<PRM::Node> DEP::randomConfigBBox(const Eigen::Vector3d& minRegion, const Eigen::Vector3d& maxRegion){
+		Eigen::Vector3d mapMinRegion, mapMaxRegion, minSampleRegion, maxSampleRegion;
+		this->map_->getCurrMapRange(mapMinRegion, mapMaxRegion);
+		// cout << "current map range is: " << mapMinRegion.transpose() << ", " << mapMaxRegion.transpose() << endl;
+		minSampleRegion(0) = std::max(mapMinRegion(0), minRegion(0));
+		minSampleRegion(1) = std::max(mapMinRegion(1), minRegion(1));
+		minSampleRegion(2) = std::max(mapMinRegion(2), minRegion(2));
+		maxSampleRegion(0) = std::min(mapMaxRegion(0), maxRegion(0));
+		maxSampleRegion(1) = std::min(mapMaxRegion(1), maxRegion(1));
+		maxSampleRegion(2) = std::min(mapMaxRegion(2), maxRegion(2));
 
-		minRegion = this->position_ - 0.5 * region;
-		maxRegion = this->position_ + 0.5 * region;
+
 		bool valid = false;
 		Eigen::Vector3d p;
 		while (valid == false){	
-			p(0) = globalPlanner::randomNumber(minRegion(0), maxRegion(0));
-			p(1) = globalPlanner::randomNumber(minRegion(1), maxRegion(1));
-			p(2) = globalPlanner::randomNumber(minRegion(2), maxRegion(2));
+			p(0) = globalPlanner::randomNumber(minSampleRegion(0), maxSampleRegion(0));
+			p(1) = globalPlanner::randomNumber(minSampleRegion(1), maxSampleRegion(1));
+			p(2) = globalPlanner::randomNumber(minSampleRegion(2), maxSampleRegion(2));
 			valid = this->map_->isInflatedFree(p);
 		}
 
@@ -815,7 +855,7 @@ namespace globalPlanner{
 	double DEP::calculatePathLength(const std::vector<shared_ptr<PRM::Node>> path){
 		int idx1 = 0;
 		double length = 0;
-		for (int idx2=1; idx2<=path.size()-1; ++idx2){
+		for (size_t idx2=1; idx2<=path.size()-1; ++idx2){
 			length += (path[idx2]->pos - path[idx1]->pos).norm();
 			++idx1;
 		}
