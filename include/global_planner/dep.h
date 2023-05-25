@@ -93,7 +93,8 @@ namespace globalPlanner{
 		bool sensorRangeCondition(const shared_ptr<PRM::Node>& n1, const shared_ptr<PRM::Node>& n2);
 		bool sensorFOVCondition(const Eigen::Vector3d& sample, const Eigen::Vector3d& pos);
 		int calculateUnknown(const shared_ptr<PRM::Node>& n, std::unordered_map<double, int>& yawNumVoxels);
-		double calculatePathLength(const std::vector<shared_ptr<PRM::Node>> path);
+		double calculatePathLength(const std::vector<shared_ptr<PRM::Node>>& path);
+		void shortcutPath(const std::vector<std::shared_ptr<PRM::Node>>& path, std::vector<std::shared_ptr<PRM::Node>>& pathSc);
 
 	};
 }

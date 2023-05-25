@@ -494,8 +494,10 @@ namespace globalPlanner{
 			cout << "start A*" << endl;
 			std::vector<std::shared_ptr<PRM::Node>> path = PRM::AStar(this->roadmap_, start, goal);
 			path.insert(path.begin(), currPos);
+			std::vector<std::shared_ptr<PRM::Node>> pathSc;
+			this->shortcutPath(path, pathSc);
 			cout << "end A*" << endl;
-			candidatePaths.push_back(path);
+			candidatePaths.push_back(pathSc);
 		}
 
 		this->candidatePaths_ = candidatePaths;
@@ -852,7 +854,7 @@ namespace globalPlanner{
 		}
 		return countTotalUnknown;
 	}
-	double DEP::calculatePathLength(const std::vector<shared_ptr<PRM::Node>> path){
+	double DEP::calculatePathLength(const std::vector<shared_ptr<PRM::Node>>& path){
 		int idx1 = 0;
 		double length = 0;
 		for (size_t idx2=1; idx2<=path.size()-1; ++idx2){
@@ -861,4 +863,45 @@ namespace globalPlanner{
 		}
 		return length;
 	}
+
+	void DEP::shortcutPath(const std::vector<std::shared_ptr<PRM::Node>>& path, std::vector<std::shared_ptr<PRM::Node>>& pathSc){
+		size_t ptr1 = 0; size_t ptr2 = 2;
+		pathSc.push_back(path[ptr1]);
+
+		if (path.size() == 1){
+			return;
+		}
+
+		if (path.size() == 2){
+			pathSc.push_back(path[1]);
+			return;
+		}
+
+		while (ros::ok()){
+			if (ptr2 > path.size()-1){
+				break;
+			}
+			std::shared_ptr<PRM::Node> p1 = path[ptr1];
+			std::shared_ptr<PRM::Node> p2 = path[ptr2];
+			Eigen::Vector3d pos1 = p1->pos;
+			Eigen::Vector3d pos2 = p2->pos;
+			bool lineValidCheck;
+			// lineValidCheck = not this->map_->isInflatedOccupiedLine(pos1, pos2);
+			lineValidCheck = this->map_->isInflatedFreeLine(pos1, pos2);
+			if (lineValidCheck and (pos1 - pos2).norm() <= 3.0){
+
+				if (ptr2 >= path.size()-1){
+					pathSc.push_back(p2);
+					break;
+				}
+				++ptr2;
+			}
+			else{
+				pathSc.push_back(path[ptr2-1]);
+				ptr1 = ptr2-1;
+				ptr2 = ptr1+2;
+			}
+		}		
+	}
+
 }
