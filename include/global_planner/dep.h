@@ -72,6 +72,7 @@ namespace globalPlanner{
 		void registerCallback();
 
 		bool makePlan();
+		std::vector<Eigen::Vector3d> getBestPath();
 		void buildRoadMap();
 		void updateInformationGain();
 		void getBestViewCandidates(std::vector<std::shared_ptr<PRM::Node>>& goalCandidates);
