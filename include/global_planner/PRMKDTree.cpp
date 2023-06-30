@@ -151,6 +151,7 @@ namespace PRM{
 	// Returns the k-nearest neighbor in ascending order
 	std::vector<std::shared_ptr<Node>> KDTree::kNearestNeighbor(std::shared_ptr<Node> n, int num){
 		std::vector<std::shared_ptr<Node>> knn;
+		num = std::min(this->size_, num);
 		for (int i=0; i<num; ++i){
 			std::shared_ptr<Node> nearestNeighborNode = nearestNeighbor(n);
 			knn.push_back(nearestNeighborNode);

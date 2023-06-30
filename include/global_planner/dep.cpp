@@ -395,7 +395,9 @@ namespace globalPlanner{
 		
 		// node connection
 		for (std::shared_ptr<PRM::Node> n : newNodes){
+			cout << "start neighbor search" << endl;
 			std::vector<std::shared_ptr<PRM::Node>> knn = this->roadmap_->kNearestNeighbor(n, this->nnNum_);
+			cout << "end neighbor search" << endl;
 			for (std::shared_ptr<PRM::Node> nearestNeighborNode: knn){ // Check collision last if all other conditions are satisfied
 				double distance2knn = (n->pos - nearestNeighborNode->pos).norm();
 				bool rangeCondition = sensorRangeCondition(n, nearestNeighborNode) and sensorRangeCondition(nearestNeighborNode, n);
