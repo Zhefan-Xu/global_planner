@@ -254,10 +254,14 @@ namespace globalPlanner{
 		return true;
 	}
 
-	std::vector<Eigen::Vector3d> DEP::getBestPath(){
-		std::vector<Eigen::Vector3d> bestPath;
+	nav_msgs::Path DEP::getBestPath(){
+		nav_msgs::Path bestPath;
 		for (std::shared_ptr<PRM::Node> n : this->bestPath_){
-			bestPath.push_back(n->pos);
+			geometry_msgs::PoseStamped p;
+			p.pose.position.x = n->pos(0);
+			p.pose.position.y = n->pos(1);
+			p.pose.position.z = n->pos(2);
+			bestPath.poses.push_back(p);
 		}
 		return bestPath;
 	}

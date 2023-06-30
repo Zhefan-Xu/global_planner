@@ -9,11 +9,10 @@
 
 #include <map_manager/dynamicMap.h>
 #include <nav_msgs/Odometry.h>
+#include <nav_msgs/Path.h>
 #include <global_planner/PRMKDTree.h>
 #include <global_planner/PRMAstar.h>
 #include <global_planner/utils.h>
-
-
 
 namespace globalPlanner{
 	class DEP{
@@ -72,7 +71,7 @@ namespace globalPlanner{
 		void registerCallback();
 
 		bool makePlan();
-		std::vector<Eigen::Vector3d> getBestPath();
+		nav_msgs::Path getBestPath();
 		void buildRoadMap();
 		void updateInformationGain();
 		void getBestViewCandidates(std::vector<std::shared_ptr<PRM::Node>>& goalCandidates);
