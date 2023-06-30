@@ -401,7 +401,6 @@ namespace globalPlanner{
 			for (std::shared_ptr<PRM::Node> nearestNeighborNode: knn){ // Check collision last if all other conditions are satisfied
 				double distance2knn = (n->pos - nearestNeighborNode->pos).norm();
 				bool rangeCondition = sensorRangeCondition(n, nearestNeighborNode) and sensorRangeCondition(nearestNeighborNode, n);
-				
 				if (distance2knn < this->maxConnectDist_ and rangeCondition == true){
 					bool hasCollision = not this->map_->isInflatedFreeLine(n->pos, nearestNeighborNode->pos);
 					if (hasCollision == false){
@@ -489,8 +488,10 @@ namespace globalPlanner{
 			}
 
 			std::shared_ptr<PRM::Node> n = gainPQ.top();
-			gainPQ.pop();			
-			goalCandidates.push_back(n);
+			gainPQ.pop();
+			if ((n->pos - this->position_).norm() >= 1.0){ 			
+				goalCandidates.push_back(n);
+			}
 		}
 		cout << "goal candidate size is: " << goalCandidates.size() << endl;
 	}
