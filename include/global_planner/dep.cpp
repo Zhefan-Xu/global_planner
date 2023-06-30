@@ -463,14 +463,18 @@ namespace globalPlanner{
 			std::shared_ptr<PRM::Node> n = gainPQ.top();
 			
 			if (firstNode){
-				maxNumVoxel = n->numVoxels;
-				firstNode = false;
+				if ((n->pos - this->position_).norm() >= 1.0){
+					maxNumVoxel = n->numVoxels;
+					firstNode = false;
+				}
 			}
 
 			if (double(n->numVoxels) < double(maxNumVoxel) * this->minVoxelThresh_){
 				break;
 			}
-			goalCandidates.push_back(n);
+			if ((n->pos - this->position_).norm() >= 1.0){
+				goalCandidates.push_back(n);
+			}
 			gainPQ.pop();
 			
 			if (int(goalCandidates.size()) >= this->maxCandidateNum_){
@@ -478,6 +482,7 @@ namespace globalPlanner{
 			}
 		}
 
+		// cout << "current pos: " << this->position_.transpose() << endl;
 		while (int(goalCandidates.size()) < this->minCandidateNum_){
 			if (gainPQ.size() == 0){
 				break;
@@ -489,7 +494,8 @@ namespace globalPlanner{
 
 			std::shared_ptr<PRM::Node> n = gainPQ.top();
 			gainPQ.pop();
-			if ((n->pos - this->position_).norm() >= 1.0){ 			
+			if ((n->pos - this->position_).norm() >= 1.0){ 	
+				// cout << "candidate goal: " << n->pos.transpose() << endl;	
 				goalCandidates.push_back(n);
 			}
 		}
