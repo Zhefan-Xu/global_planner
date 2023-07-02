@@ -828,6 +828,13 @@ namespace globalPlanner{
 		maxSampleRegion(1) = std::min(mapMaxRegion(1), maxRegion(1));
 		maxSampleRegion(2) = std::min(mapMaxRegion(2), maxRegion(2));
 
+		minSampleRegion(0) = std::max(minSampleRegion(0), this->globalRegionMin_(0));
+		minSampleRegion(1) = std::max(minSampleRegion(1), this->globalRegionMin_(1));
+		minSampleRegion(2) = std::max(minSampleRegion(2), this->globalRegionMin_(2));
+		maxSampleRegion(0) = std::min(maxSampleRegion(0), this->globalRegionMax_(0));
+		maxSampleRegion(1) = std::min(maxSampleRegion(1), this->globalRegionMax_(1));
+		maxSampleRegion(2) = std::min(maxSampleRegion(2), this->globalRegionMax_(2));
+
 
 		bool valid = false;
 		Eigen::Vector3d p;
