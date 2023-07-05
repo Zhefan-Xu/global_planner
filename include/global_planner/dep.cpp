@@ -229,7 +229,7 @@ namespace globalPlanner{
 		this->odomSub_ = this->nh_.subscribe(this->odomTopic_, 1000, &DEP::odomCB, this);
 	
 		// visualization timer
-		this->visTimer_ = this->nh_.createTimer(ros::Duration(0.1), &DEP::visCB, this);
+		this->visTimer_ = this->nh_.createTimer(ros::Duration(0.3), &DEP::visCB, this);
 
 	}
 
@@ -747,7 +747,7 @@ namespace globalPlanner{
 					line.color.g = 0.0;
 					line.color.b = 0.0;
 					line.color.a = 1.0;
-					line.lifetime = ros::Duration(0.1);
+					line.lifetime = ros::Duration(0.5);
 					++countLineNum;
 					candidatePathMarkers.markers.push_back(line);				
 				}
@@ -772,7 +772,7 @@ namespace globalPlanner{
 			point.pose.position.x = n->pos(0);
 			point.pose.position.y = n->pos(1);
 			point.pose.position.z = n->pos(2);
-			point.lifetime = ros::Duration(0.1);
+			point.lifetime = ros::Duration(0.5);
 			point.scale.x = 0.2;
 			point.scale.y = 0.2;
 			point.scale.z = 0.2;
@@ -807,7 +807,7 @@ namespace globalPlanner{
 				line.color.g = 0.0;
 				line.color.b = 0.0;
 				line.color.a = 1.0;
-				line.lifetime = ros::Duration(0.1);
+				line.lifetime = ros::Duration(0.5);
 				++countLineNum;
 				bestPathMarkers.markers.push_back(line);				
 			}
@@ -916,7 +916,9 @@ namespace globalPlanner{
 			bool lineValidCheck;
 			// lineValidCheck = not this->map_->isInflatedOccupiedLine(pos1, pos2);
 			lineValidCheck = this->map_->isInflatedFreeLine(pos1, pos2);
-			if (lineValidCheck and (pos1 - pos2).norm() <= 3.0){
+			// double maxDistance = std::numeric_limits<double>::max();
+			double maxDistance = 3.0;
+			if (lineValidCheck and (pos1 - pos2).norm() <= maxDistance){
 
 				if (ptr2 >= path.size()-1){
 					pathSc.push_back(p2);
