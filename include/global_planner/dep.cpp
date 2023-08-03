@@ -391,13 +391,10 @@ namespace globalPlanner{
 				}
 			}
 		}
-		cout << "newly added: " << countSample << " samples" << endl;
 		
 		// node connection
 		for (std::shared_ptr<PRM::Node> n : newNodes){
-			cout << "start neighbor search" << endl;
 			std::vector<std::shared_ptr<PRM::Node>> knn = this->roadmap_->kNearestNeighbor(n, this->nnNum_);
-			cout << "end neighbor search" << endl;
 			for (std::shared_ptr<PRM::Node> nearestNeighborNode: knn){ // Check collision last if all other conditions are satisfied
 				double distance2knn = (n->pos - nearestNeighborNode->pos).norm();
 				bool rangeCondition = sensorRangeCondition(n, nearestNeighborNode) and sensorRangeCondition(nearestNeighborNode, n);
@@ -411,7 +408,6 @@ namespace globalPlanner{
 			}
 			n->newNode = true;
 		}
-		cout << "finished node connection" <<endl;
 	}	 
 
 	void DEP::updateInformationGain(){
@@ -473,7 +469,9 @@ namespace globalPlanner{
 				break;
 			}
 			if ((n->pos - this->position_).norm() >= 1.0){
-				goalCandidates.push_back(n);
+				if (this->map_->isInflatedFree(n->pos)){
+					goalCandidates.push_back(n);
+				}
 			}
 			gainPQ.pop();
 			
@@ -496,28 +494,25 @@ namespace globalPlanner{
 			gainPQ.pop();
 			if ((n->pos - this->position_).norm() >= 1.0){ 	
 				// cout << "candidate goal: " << n->pos.transpose() << endl;	
-				goalCandidates.push_back(n);
+				if (this->map_->isInflatedFree(n->pos)){
+					goalCandidates.push_back(n);
+				}			
 			}
 		}
-		cout << "goal candidate size is: " << goalCandidates.size() << endl;
 	}
 
 	void DEP::findCandidatePath(const std::vector<std::shared_ptr<PRM::Node>>& goalCandidates){
 		// find nearest node of current location
 		std::shared_ptr<PRM::Node> currPos;
 		currPos.reset(new PRM::Node (this->position_));
-		cout << "start position is: " << this->position_.transpose() << endl;
 		std::shared_ptr<PRM::Node> start = this->roadmap_->nearestNeighbor(currPos);
-		cout << "find the nearest neighbor: " << start->pos.transpose() << endl;
 
 		std::vector<std::vector<std::shared_ptr<PRM::Node>>> candidatePaths;
 		for (std::shared_ptr<PRM::Node> goal : goalCandidates){
-			cout << "start A*" << endl;
-			std::vector<std::shared_ptr<PRM::Node>> path = PRM::AStar(this->roadmap_, start, goal);
+			std::vector<std::shared_ptr<PRM::Node>> path = PRM::AStar(this->roadmap_, start, goal, this->map_);
 			path.insert(path.begin(), currPos);
 			std::vector<std::shared_ptr<PRM::Node>> pathSc;
 			this->shortcutPath(path, pathSc);
-			cout << "end A*" << endl;
 			candidatePaths.push_back(pathSc);
 		}
 
@@ -812,7 +807,7 @@ namespace globalPlanner{
 				bestPathMarkers.markers.push_back(line);				
 			}
 		}
-	this->bestPathPub_.publish(bestPathMarkers);		
+		this->bestPathPub_.publish(bestPathMarkers);		
 	}
 
 

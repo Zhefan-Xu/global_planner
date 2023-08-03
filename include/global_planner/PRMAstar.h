@@ -18,7 +18,8 @@ namespace PRM{
 
 	std::vector<std::shared_ptr<Node>> AStar(const std::shared_ptr<KDTree>& roadmap,
 										     const std::shared_ptr<Node>& start,
-										     const std::shared_ptr<Node>& goal){
+										     const std::shared_ptr<Node>& goal,
+										     const std::shared_ptr<mapManager::occMap>& map){
 		std::vector<std::shared_ptr<Node>> path;
 
 		// open: priority queue
@@ -60,13 +61,15 @@ namespace PRM{
 			for (std::shared_ptr<Node> neighborNode : currNode->adjNodes){
 				// Node must be not in close
 				if (not inClose(neighborNode, close)){
-					double cost = currNode->g + (currNode->pos - neighborNode->pos).norm();
-					if (cost < neighborNode->g){
-						neighborNode->g = cost;
-						neighborNode->f = cost + (neighborNode->pos - goal->pos).norm();
-						open.push(neighborNode);
-						neighborNode->parent = currNode;
-						record.push_back(neighborNode);
+					if (map->isInflatedFreeLine(currNode->pos, neighborNode->pos)){
+						double cost = currNode->g + (currNode->pos - neighborNode->pos).norm();
+						if (cost < neighborNode->g){
+							neighborNode->g = cost;
+							neighborNode->f = cost + (neighborNode->pos - goal->pos).norm();
+							open.push(neighborNode);
+							neighborNode->parent = currNode;
+							record.push_back(neighborNode);
+						}
 					}
 				}
 			}
