@@ -276,6 +276,19 @@ namespace globalPlanner{
 			p.pose.position.z = n->pos(2);
 			bestPath.poses.push_back(p);
 		}
+
+		// get the best yaw for the last pose
+		double bestYaw = 0;
+		double maxNum = 0;
+		for (double yaw : this->yaws_){
+			if (this->bestPath_.back()->yawNumVoxels[yaw] > maxNum){
+				maxNum = this->bestPath_.back()->yawNumVoxels[yaw];
+				bestYaw = yaw;
+			}
+		}
+
+		bestPath.poses.back().pose.orientation = globalPlanner::quaternion_from_rpy(0, 0, bestYaw);
+
 		return bestPath;
 	}
 
@@ -545,9 +558,7 @@ namespace globalPlanner{
 			for (size_t i=0; i <= path.size()-1; i++){
 				unknownVoxel += path[i]->numVoxels;
 			}
-			//cout << "voxel count done" << endl;
 			double distance = calculatePathLength(path);
-			//cout << "distance calc" <<endl;
 			if (unknownVoxel/distance > highestScore){
 				highestScore = unknownVoxel/distance;
 				bestPath = path;
@@ -848,12 +859,29 @@ namespace globalPlanner{
 
 
 		bool valid = false;
+		double safeDist = 0.3;
 		Eigen::Vector3d p;
 		while (valid == false){	
 			p(0) = globalPlanner::randomNumber(minSampleRegion(0), maxSampleRegion(0));
 			p(1) = globalPlanner::randomNumber(minSampleRegion(1), maxSampleRegion(1));
 			p(2) = globalPlanner::randomNumber(minSampleRegion(2), maxSampleRegion(2));
-			valid = this->map_->isInflatedFree(p);
+
+			bool outloop = false;
+			for (double x=p(0)-safeDist; x<=p(0)+safeDist and not outloop; x+=this->map_->getRes()){
+				for (double y=p(1)-safeDist; y<=p(1)+safeDist and not outloop; y+=this->map_->getRes()){
+					for (double z=p(2)-safeDist; z<=p(2)+safeDist and not outloop; z+=this->map_->getRes()){
+						if (not this->map_->isInflatedFree(Eigen::Vector3d (x, y, z))){
+							outloop = true;
+						}
+					}
+				}
+			}
+			if (not outloop){
+				valid = true;	
+			}
+				
+
+			// valid = this->map_->isInflatedFree(p);
 		}
 
 		std::shared_ptr<PRM::Node> newNode (new PRM::Node(p));
