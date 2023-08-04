@@ -36,7 +36,8 @@ namespace globalPlanner{
 		std::string odomTopic_;
 		Eigen::Vector3d globalRegionMin_, globalRegionMax_;
 		Eigen::Vector3d localRegionMin_, localRegionMax_;
-		int sampleThresh_;
+		int localSampleThresh_;
+		int globalSampleThresh_;
 		double distThresh_;
 		double horizontalFOV_;
 		double verticalFOV_;
@@ -75,8 +76,8 @@ namespace globalPlanner{
 		void buildRoadMap();
 		void updateInformationGain();
 		void getBestViewCandidates(std::vector<std::shared_ptr<PRM::Node>>& goalCandidates);
-		void findCandidatePath(const std::vector<std::shared_ptr<PRM::Node>>& goalCandidates);
-		void findBestPath(const std::vector<std::vector<std::shared_ptr<PRM::Node>>>& candidatePaths);
+		bool findCandidatePath(const std::vector<std::shared_ptr<PRM::Node>>& goalCandidates,  std::vector<std::vector<std::shared_ptr<PRM::Node>>>& candidatePaths);
+		void findBestPath(const std::vector<std::vector<std::shared_ptr<PRM::Node>>>& candidatePaths, std::vector<std::shared_ptr<PRM::Node>>& bestPath);
 
 
 		// callback functions

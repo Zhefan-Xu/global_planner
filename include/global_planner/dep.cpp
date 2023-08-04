@@ -91,16 +91,27 @@ namespace globalPlanner{
 			this->globalRegionMax_(2) = globalRegionMaxTemp[2];
 			cout << this->hint_ << ": Global Region Max: " << this->globalRegionMax_[0] <<" "<< this->globalRegionMax_[1]<<" "<< this->globalRegionMax_[2]<< endl;
 		}
-		
-		// Sample Threshold Value
-		if (not this->nh_.getParam(this->ns_ + "/sampleThresh", this->sampleThresh_)){
-			this->sampleThresh_ = 50;
-			cout << this->hint_ << ": No sample thresh param. Use default: 50" << endl;
+
+		// Local Sample Threshold Value
+		if (not this->nh_.getParam(this->ns_ + "/local_sample_thresh", this->localSampleThresh_)){
+			this->localSampleThresh_ = 50;
+			cout << this->hint_ << ": No local sample thresh param. Use default: 50" << endl;
 		}
 		else{
-			cout << this->hint_ << ": Sample Thresh: " << this->sampleThresh_ << endl;
+			cout << this->hint_ << ": Local sample Thresh: " << this->localSampleThresh_ << endl;
 		}
-		if (not this->nh_.getParam(this->ns_ + "/distThresh", this->distThresh_)){
+		
+		// Global Sample Threshold Value
+		if (not this->nh_.getParam(this->ns_ + "/global_sample_thresh", this->globalSampleThresh_)){
+			this->globalSampleThresh_ = 50;
+			cout << this->hint_ << ": No global sample thresh param. Use default: 50" << endl;
+		}
+		else{
+			cout << this->hint_ << ": Global sample Thresh: " << this->globalSampleThresh_ << endl;
+		}
+
+		// minimum distance for node sampling
+		if (not this->nh_.getParam(this->ns_ + "/dist_thresh", this->distThresh_)){
 			this->distThresh_ = 0.8;
 			cout << this->hint_ << ": No distance thresh param. Use default: 0.8" << endl;
 		}
@@ -215,13 +226,13 @@ namespace globalPlanner{
 
 	void DEP::registerPub(){
 		// roadmap visualization publisher
-		this->roadmapPub_ = this->nh_.advertise<visualization_msgs::MarkerArray>("/dep/roadmap", 10);
+		this->roadmapPub_ = this->nh_.advertise<visualization_msgs::MarkerArray>("/dep/roadmap", 1000);
 
 		// candidate paths publisher
-		this->candidatePathPub_ = this->nh_.advertise<visualization_msgs::MarkerArray>("/dep/candidate_paths", 10);
+		this->candidatePathPub_ = this->nh_.advertise<visualization_msgs::MarkerArray>("/dep/candidate_paths", 1000);
 
 		// best path publisher
-		this->bestPathPub_ = this->nh_.advertise<visualization_msgs::MarkerArray>("/dep/best_paths", 10);
+		this->bestPathPub_ = this->nh_.advertise<visualization_msgs::MarkerArray>("/dep/best_paths", 1000);
 	}
 
 	void DEP::registerCallback(){
@@ -229,7 +240,7 @@ namespace globalPlanner{
 		this->odomSub_ = this->nh_.subscribe(this->odomTopic_, 1000, &DEP::odomCB, this);
 	
 		// visualization timer
-		this->visTimer_ = this->nh_.createTimer(ros::Duration(0.3), &DEP::visCB, this);
+		this->visTimer_ = this->nh_.createTimer(ros::Duration(0.1), &DEP::visCB, this);
 
 	}
 
@@ -241,16 +252,18 @@ namespace globalPlanner{
 		
 		this->getBestViewCandidates(this->goalCandidates_);
 
-		cout << "finish best view candidate" << endl;
+		cout << "finish best view candidate with size: " << this->goalCandidates_.size() << endl;
 
-		this->findCandidatePath(this->goalCandidates_);
+		bool findCandidatePathSuccess = this->findCandidatePath(this->goalCandidates_, this->candidatePaths_);
 
-		cout << "finish candidate path" << endl;
+		cout << "finish candidate path with size: " << this->candidatePaths_.size() << endl;
+		if (not findCandidatePathSuccess){
+			cout << "Find candidate paths fails. need generate more samples." << endl;
+			return false;
+		}
 
-		this->findBestPath(this->candidatePaths_);
-
-		cout << "found best path" << endl;
-
+		this->findBestPath(this->candidatePaths_, this->bestPath_);
+		cout << "found best path with size: " << this->bestPath_.size() << endl;
 		return true;
 	}
 
@@ -303,7 +316,7 @@ namespace globalPlanner{
 
 	bool isNodeRequireUpdate(std::shared_ptr<PRM::Node> n, std::vector<std::shared_ptr<PRM::Node>> path, double& leastDistance){
 		double distanceThresh = 2;
-		leastDistance = 1000000;
+		leastDistance = std::numeric_limits<double>::max();
 		for (std::shared_ptr<PRM::Node> waypoint: path){
 			double currentDistance = (n->pos - waypoint->pos).norm();
 			if (currentDistance < leastDistance){
@@ -330,7 +343,7 @@ namespace globalPlanner{
 				int countFailureGlobal = 0;
 				// Generate new node
 				while (ros::ok()){
-					if (countFailureGlobal > this->sampleThresh_){
+					if (countFailureGlobal > this->globalSampleThresh_){
 						saturate = true;
 						break;
 					}
@@ -361,7 +374,7 @@ namespace globalPlanner{
 					// Generate new node
 					while (ros::ok() and true){
 						//cout << "failure number: " << countFailureLocal << endl;
-						if (countFailureLocal > this->sampleThresh_){
+						if (countFailureLocal > this->localSampleThresh_){
 							regionSaturate = true;
 							break;
 						}
@@ -501,27 +514,31 @@ namespace globalPlanner{
 		}
 	}
 
-	void DEP::findCandidatePath(const std::vector<std::shared_ptr<PRM::Node>>& goalCandidates){
+	bool DEP::findCandidatePath(const std::vector<std::shared_ptr<PRM::Node>>& goalCandidates, std::vector<std::vector<std::shared_ptr<PRM::Node>>>& candidatePaths){
+		bool findPath = false;
 		// find nearest node of current location
 		std::shared_ptr<PRM::Node> currPos;
 		currPos.reset(new PRM::Node (this->position_));
 		std::shared_ptr<PRM::Node> start = this->roadmap_->nearestNeighbor(currPos);
 
-		std::vector<std::vector<std::shared_ptr<PRM::Node>>> candidatePaths;
+		candidatePaths.clear();
 		for (std::shared_ptr<PRM::Node> goal : goalCandidates){
 			std::vector<std::shared_ptr<PRM::Node>> path = PRM::AStar(this->roadmap_, start, goal, this->map_);
+			if (int(path.size()) != 0){
+				findPath = true;
+			}
 			path.insert(path.begin(), currPos);
 			std::vector<std::shared_ptr<PRM::Node>> pathSc;
 			this->shortcutPath(path, pathSc);
 			candidatePaths.push_back(pathSc);
 		}
 
-		this->candidatePaths_ = candidatePaths;
+		return findPath;
 	}
 
-	void DEP::findBestPath(const std::vector<std::vector<std::shared_ptr<PRM::Node>>>& candidatePaths){
+	void DEP::findBestPath(const std::vector<std::vector<std::shared_ptr<PRM::Node>>>& candidatePaths, std::vector<std::shared_ptr<PRM::Node>>& bestPath){
 		// find path highest unknown
-		std::vector<std::shared_ptr<PRM::Node>> bestPath;
+		bestPath.clear();
 		double highestScore = 0;
 		for (std::vector<std::shared_ptr<PRM::Node>> path : candidatePaths){
 			int unknownVoxel = 0;
@@ -536,7 +553,6 @@ namespace globalPlanner{
 				bestPath = path;
 			}
 		}
-		this->bestPath_ = bestPath;
 	}
 
 	void DEP::odomCB(const nav_msgs::OdometryConstPtr& odom){

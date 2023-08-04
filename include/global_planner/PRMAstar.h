@@ -42,7 +42,7 @@ namespace PRM{
 
 			if (open.size() == 0){
 				findPath = false;
-				cout << "[Astar]: No valid path. This should not happen." << endl;
+				cout << "[Astar]: No valid path." << endl;
 				break;
 			}
 
