@@ -18,7 +18,7 @@ namespace globalPlanner{
 		this->registerCallback();
 	}
 
-	void DEP::setMap(const std::shared_ptr<mapManager::dynamicMap>& map){
+	void DEP::setMap(const std::shared_ptr<mapManager::occMap>& map){
 		this->map_ = map;
 	}
 
@@ -481,6 +481,7 @@ namespace globalPlanner{
 
 		// select candidates from the priority queue
 		int maxNumVoxel = 0;
+		double safeDist = 0.3;
 		while (ros::ok()){
 			std::shared_ptr<PRM::Node> n = gainPQ.top();
 			
@@ -495,8 +496,9 @@ namespace globalPlanner{
 				break;
 			}
 			if ((n->pos - this->position_).norm() >= 1.0){
-				if (this->map_->isInflatedFree(n->pos)){
+				if (this->isPosValid(n->pos, safeDist)){
 					goalCandidates.push_back(n);
+					cout << "Valid goal candidate: " << n->pos.transpose() << endl;
 				}
 			}
 			gainPQ.pop();
@@ -520,8 +522,9 @@ namespace globalPlanner{
 			gainPQ.pop();
 			if ((n->pos - this->position_).norm() >= 1.0){ 	
 				// cout << "candidate goal: " << n->pos.transpose() << endl;	
-				if (this->map_->isInflatedFree(n->pos)){
+				if (this->isPosValid(n->pos, safeDist)){
 					goalCandidates.push_back(n);
+					cout << "Valid goal candidate: " << n->pos.transpose() << endl;
 				}			
 			}
 		}
@@ -838,7 +841,19 @@ namespace globalPlanner{
 	}
 
 
-	// TODO: add map range
+	bool DEP::isPosValid(const Eigen::Vector3d& p, double safeDist){
+		for (double x=p(0)-safeDist; x<=p(0)+safeDist; x+=this->map_->getRes()){
+			for (double y=p(1)-safeDist; y<=p(1)+safeDist; y+=this->map_->getRes()){
+				for (double z=p(2)-safeDist; z<=p(2)+safeDist; z+=this->map_->getRes()){
+					if (not this->map_->isInflatedFree(Eigen::Vector3d (x, y, z))){
+						return false;
+					}
+				}
+			}
+		}
+		return true;		
+	}
+
 	std::shared_ptr<PRM::Node> DEP::randomConfigBBox(const Eigen::Vector3d& minRegion, const Eigen::Vector3d& maxRegion){
 		Eigen::Vector3d mapMinRegion, mapMaxRegion, minSampleRegion, maxSampleRegion;
 		this->map_->getCurrMapRange(mapMinRegion, mapMaxRegion);
@@ -866,20 +881,7 @@ namespace globalPlanner{
 			p(1) = globalPlanner::randomNumber(minSampleRegion(1), maxSampleRegion(1));
 			p(2) = globalPlanner::randomNumber(minSampleRegion(2), maxSampleRegion(2));
 
-			bool outloop = false;
-			for (double x=p(0)-safeDist; x<=p(0)+safeDist and not outloop; x+=this->map_->getRes()){
-				for (double y=p(1)-safeDist; y<=p(1)+safeDist and not outloop; y+=this->map_->getRes()){
-					for (double z=p(2)-safeDist; z<=p(2)+safeDist and not outloop; z+=this->map_->getRes()){
-						if (not this->map_->isInflatedFree(Eigen::Vector3d (x, y, z))){
-							outloop = true;
-						}
-					}
-				}
-			}
-			if (not outloop){
-				valid = true;	
-			}
-				
+			valid = this->isPosValid(p, safeDist);
 
 			// valid = this->map_->isInflatedFree(p);
 		}

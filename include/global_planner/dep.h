@@ -28,7 +28,7 @@ namespace globalPlanner{
 		ros::Timer visTimer_;
 
 		nav_msgs::Odometry odom_;
-		std::shared_ptr<mapManager::dynamicMap> map_; 
+		std::shared_ptr<mapManager::occMap> map_; 
 		std::shared_ptr<PRM::KDTree> roadmap_;
 
 
@@ -65,7 +65,7 @@ namespace globalPlanner{
 	public:
 		DEP(const ros::NodeHandle& nh);
 
-		void setMap(const std::shared_ptr<mapManager::dynamicMap>& map);
+		void setMap(const std::shared_ptr<mapManager::occMap>& map);
 		void initParam();
 		void initModules();
 		void registerPub();
@@ -90,6 +90,7 @@ namespace globalPlanner{
 		void publishBestPath();
 
 		// help function
+		bool isPosValid(const Eigen::Vector3d& p, double safeDist);
 		std::shared_ptr<PRM::Node> randomConfigBBox(const Eigen::Vector3d& minRegion, const Eigen::Vector3d& maxRegion);
 		bool sensorRangeCondition(const shared_ptr<PRM::Node>& n1, const shared_ptr<PRM::Node>& n2);
 		bool sensorFOVCondition(const Eigen::Vector3d& sample, const Eigen::Vector3d& pos);
