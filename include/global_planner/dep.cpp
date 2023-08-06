@@ -248,7 +248,9 @@ namespace globalPlanner{
 		if (not this->odomReceived_) return false;
 		this->buildRoadMap();
 
+
 		this->updateInformationGain();
+
 		
 		this->getBestViewCandidates(this->goalCandidates_);
 
@@ -269,7 +271,7 @@ namespace globalPlanner{
 
 	nav_msgs::Path DEP::getBestPath(){
 		nav_msgs::Path bestPath;
-		for (std::shared_ptr<PRM::Node> n : this->bestPath_){
+		for (std::shared_ptr<PRM::Node>& n : this->bestPath_){
 			geometry_msgs::PoseStamped p;
 			p.pose.position.x = n->pos(0);
 			p.pose.position.y = n->pos(1);
@@ -278,15 +280,7 @@ namespace globalPlanner{
 		}
 
 		// get the best yaw for the last pose
-		double bestYaw = 0;
-		double maxNum = 0;
-		for (double yaw : this->yaws_){
-			if (this->bestPath_.back()->yawNumVoxels[yaw] > maxNum){
-				maxNum = this->bestPath_.back()->yawNumVoxels[yaw];
-				bestYaw = yaw;
-			}
-		}
-
+		double bestYaw = this->bestPath_.back()->getBestYaw();
 		bestPath.poses.back().pose.orientation = globalPlanner::quaternion_from_rpy(0, 0, bestYaw);
 
 		return bestPath;
@@ -330,7 +324,7 @@ namespace globalPlanner{
 	bool isNodeRequireUpdate(std::shared_ptr<PRM::Node> n, std::vector<std::shared_ptr<PRM::Node>> path, double& leastDistance){
 		double distanceThresh = 2;
 		leastDistance = std::numeric_limits<double>::max();
-		for (std::shared_ptr<PRM::Node> waypoint: path){
+		for (std::shared_ptr<PRM::Node>& waypoint: path){
 			double currentDistance = (n->pos - waypoint->pos).norm();
 			if (currentDistance < leastDistance){
 				leastDistance = currentDistance;
@@ -419,9 +413,9 @@ namespace globalPlanner{
 		}
 		
 		// node connection
-		for (std::shared_ptr<PRM::Node> n : newNodes){
+		for (std::shared_ptr<PRM::Node>& n : newNodes){
 			std::vector<std::shared_ptr<PRM::Node>> knn = this->roadmap_->kNearestNeighbor(n, this->nnNum_);
-			for (std::shared_ptr<PRM::Node> nearestNeighborNode: knn){ // Check collision last if all other conditions are satisfied
+			for (std::shared_ptr<PRM::Node>& nearestNeighborNode : knn){ // Check collision last if all other conditions are satisfied
 				double distance2knn = (n->pos - nearestNeighborNode->pos).norm();
 				bool rangeCondition = sensorRangeCondition(n, nearestNeighborNode) and sensorRangeCondition(nearestNeighborNode, n);
 				if (distance2knn < this->maxConnectDist_ and rangeCondition == true){
@@ -448,11 +442,11 @@ namespace globalPlanner{
 			}	
 		}
 
-		for (Eigen::Vector3d histPos : this->histTraj_){ // traj update nodes
+		for (Eigen::Vector3d& histPos : this->histTraj_){ // traj update nodes
 			std::shared_ptr<PRM::Node> histN;
 			histN.reset(new PRM::Node(histPos));
 			std::vector<std::shared_ptr<PRM::Node>> nns = this->roadmap_->kNearestNeighbor(histN, 10);
-			for (std::shared_ptr<PRM::Node> nn : nns){
+			for (std::shared_ptr<PRM::Node>& nn : nns){
 				if ((nn->pos - histN->pos).norm() <= this->updateDist_){
 					updateSet.insert(nn);
 				}
@@ -475,7 +469,7 @@ namespace globalPlanner{
 		std::priority_queue<std::shared_ptr<PRM::Node>, std::vector<std::shared_ptr<PRM::Node>>, PRM::GainCompareNode> gainPQ;
 
 		// iterate through all points in the roadmap
-		for (std::shared_ptr<PRM::Node> n : this->prmNodeVec_){
+		for (std::shared_ptr<PRM::Node>& n : this->prmNodeVec_){
 			gainPQ.push(n);
 		}
 
@@ -498,7 +492,7 @@ namespace globalPlanner{
 			if ((n->pos - this->position_).norm() >= 1.0){
 				if (this->isPosValid(n->pos, safeDist)){
 					goalCandidates.push_back(n);
-					cout << "Valid goal candidate: " << n->pos.transpose() << endl;
+					// cout << "Valid goal candidate: " << n->pos.transpose() << endl;
 				}
 			}
 			gainPQ.pop();
@@ -524,7 +518,7 @@ namespace globalPlanner{
 				// cout << "candidate goal: " << n->pos.transpose() << endl;	
 				if (this->isPosValid(n->pos, safeDist)){
 					goalCandidates.push_back(n);
-					cout << "Valid goal candidate: " << n->pos.transpose() << endl;
+					// cout << "Valid goal candidate: " << n->pos.transpose() << endl;
 				}			
 			}
 		}
@@ -537,16 +531,21 @@ namespace globalPlanner{
 		currPos.reset(new PRM::Node (this->position_));
 		std::shared_ptr<PRM::Node> start = this->roadmap_->nearestNeighbor(currPos);
 
+
 		candidatePaths.clear();
 		for (std::shared_ptr<PRM::Node> goal : goalCandidates){
 			std::vector<std::shared_ptr<PRM::Node>> path = PRM::AStar(this->roadmap_, start, goal, this->map_);
 			if (int(path.size()) != 0){
 				findPath = true;
 			}
+			else{
+				continue;
+			}
 			path.insert(path.begin(), currPos);
 			std::vector<std::shared_ptr<PRM::Node>> pathSc;
 			this->shortcutPath(path, pathSc);
 			candidatePaths.push_back(pathSc);
+		
 		}
 
 		return findPath;
@@ -555,15 +554,25 @@ namespace globalPlanner{
 	void DEP::findBestPath(const std::vector<std::vector<std::shared_ptr<PRM::Node>>>& candidatePaths, std::vector<std::shared_ptr<PRM::Node>>& bestPath){
 		// find path highest unknown
 		bestPath.clear();
-		double highestScore = 0;
-		for (std::vector<std::shared_ptr<PRM::Node>> path : candidatePaths){
+		double highestScore = std::numeric_limits<double>::min();
+		for (int n=0; n<int(candidatePaths.size()); ++n){
+			std::vector<std::shared_ptr<PRM::Node>> path = candidatePaths[n]; 
+			if (int(path.size()) == 0) continue;
+
 			int unknownVoxel = 0;
-			for (size_t i=0; i <= path.size()-1; i++){
-				unknownVoxel += path[i]->numVoxels;
+			for (int i=0; i<int(path.size())-1; ++i){
+				std::shared_ptr<PRM::Node> currNode = path[i];
+				std::shared_ptr<PRM::Node> nextNode = path[i+1];
+				double angle = angleBetweenVectors(currNode->pos, nextNode->pos);
+				unknownVoxel += currNode->getUnknownVoxels(angle);
 			}
+			unknownVoxel += path.back()->yawNumVoxels[path.back()->getBestYaw()];
+
 			double distance = calculatePathLength(path);
-			if (unknownVoxel/distance > highestScore){
-				highestScore = unknownVoxel/distance;
+			double score = double(unknownVoxel)/distance; 
+			// cout << "unknown for path: " << n <<  " is: " << unknownVoxel << " score: " << score << endl;
+			if (score > highestScore){
+				highestScore = score;
 				bestPath = path;
 			}
 		}
@@ -724,7 +733,7 @@ namespace globalPlanner{
 		visualization_msgs::MarkerArray candidatePathMarkers;
 		int countNodeNum = 0;
 		int countLineNum = 0;
-		for (std::vector<std::shared_ptr<PRM::Node>> path : this->candidatePaths_){
+		for (std::vector<std::shared_ptr<PRM::Node>>& path : this->candidatePaths_){
 			for (size_t i=0; i<path.size(); ++i){
 				std::shared_ptr<PRM::Node> n = path[i];
 				visualization_msgs::Marker point;
@@ -894,7 +903,6 @@ namespace globalPlanner{
 		for (double yaw : this->yaws_){
 			yawNumVoxels[yaw] = 0;
 		}
-
 		// Position:
 		Eigen::Vector3d p = n->pos;
 

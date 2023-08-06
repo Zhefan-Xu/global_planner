@@ -20,7 +20,7 @@ namespace PRM{
 	struct Node{
 		Eigen::Vector3d pos;
 		int numVoxels = 0;
-		std::unordered_map<double, int> yawNumVoxels;
+		std::unordered_map<double, int> yawNumVoxels = {};
 		std::shared_ptr<Node> left = NULL;
 		std::shared_ptr<Node> right = NULL;
 		std::shared_ptr<Node> treeParent = NULL;
@@ -33,6 +33,67 @@ namespace PRM{
 
 		Node (const Eigen::Vector3d& p){
 			this->pos = p;
+		}
+
+		int getUnknownVoxels(double angle){
+			if (int(yawNumVoxels.size()) == 0){
+				return 0;
+			}
+			// make sure the angle is [0, 2PI)
+			while (angle < 0){
+				angle += 2 * M_PI;
+			}
+
+			while (angle >= 2 * M_PI){
+				angle -= 2 * M_PI;
+			}
+
+			double startYaw, endYaw;
+			std::vector<double> yaws;
+			for (auto key : yawNumVoxels){
+				yaws.push_back(key.first);
+			}
+			std::sort(yaws.begin(), yaws.end());
+
+			double yawDiff = yaws[1] - yaws[0];
+			bool findAngle = false;
+			for (int i=0; i<int(yaws.size())-1; ++i){
+				if (angle >= yaws[i] and angle <= yaws[i+1]){
+					startYaw = yaws[i];
+					endYaw = yaws[i+1];
+					findAngle = true;
+					break;
+				}
+			}
+
+			// this means it is in [last angle, zero] range
+			if (not findAngle){
+				startYaw = yaws.back();
+				endYaw = 0.0;
+			}
+
+			int angleNumVoxels = yawNumVoxels[startYaw] + (angle - startYaw) * double(yawNumVoxels[endYaw] - yawNumVoxels[startYaw])/yawDiff;
+			return angleNumVoxels;
+		}
+
+		double getBestYaw(){
+			int maxNum = 0;
+			double maxYaw = 0;
+			for (auto key : yawNumVoxels){
+				if (key.second > maxNum){
+					maxYaw = key.first;
+				}
+			}
+			return maxYaw;
+		}
+
+		int getBestYawVoxel(){
+			if (int(yawNumVoxels.size()) == 0){
+				return 0;
+			}
+
+			double bestYaw = this->getBestYaw();
+			return this->yawNumVoxels[bestYaw];
 		}
 	};
 
