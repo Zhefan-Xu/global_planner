@@ -492,7 +492,7 @@ namespace globalPlanner{
 			if ((n->pos - this->position_).norm() >= 1.0){
 				if (this->isPosValid(n->pos, safeDist)){
 					goalCandidates.push_back(n);
-					// cout << "Valid goal candidate: " << n->pos.transpose() << endl;
+					// cout << "Valid goal candidate: " << n->pos.transpose() << " voxel: " << n->numVoxels  << endl;
 				}
 			}
 			gainPQ.pop();
@@ -518,7 +518,7 @@ namespace globalPlanner{
 				// cout << "candidate goal: " << n->pos.transpose() << endl;	
 				if (this->isPosValid(n->pos, safeDist)){
 					goalCandidates.push_back(n);
-					// cout << "Valid goal candidate: " << n->pos.transpose() << endl;
+					// cout << "Valid goal candidate: " << n->pos.transpose() << " voxel: " << n->numVoxels  << endl;
 				}			
 			}
 		}
@@ -569,7 +569,7 @@ namespace globalPlanner{
 
 			double distance = this->calculatePathLength(path);
 			double score = double(unknownVoxel)/distance; 
-			cout << "unknown for path: " << n <<  " is: " << unknownVoxel << " score: " << score << " distance: " << distance <<  " Last total unknown: " << path.back()->numVoxels << " last best: " << path.back()->getBestYawVoxel() << endl;
+			// cout << "unknown for path: " << n <<  " is: " << unknownVoxel << " score: " << score << " distance: " << distance <<  " Last total unknown: " << path.back()->numVoxels << " last best: " << path.back()->getBestYawVoxel() << endl;
 			if (score > highestScore){
 				highestScore = score;
 				bestPath = path;
@@ -967,8 +967,7 @@ namespace globalPlanner{
 			// double maxDistance = std::numeric_limits<double>::max();
 			double maxDistance = 3.0;
 			if (lineValidCheck and (pos1 - pos2).norm() <= maxDistance){
-
-				if (ptr2 >= path.size()-1){
+				if (ptr2 == path.size()-1){
 					pathSc.push_back(p2);
 					break;
 				}
@@ -976,6 +975,10 @@ namespace globalPlanner{
 			}
 			else{
 				pathSc.push_back(path[ptr2-1]);
+				if (ptr2 == path.size()-1){
+					pathSc.push_back(p2);
+					break;
+				}
 				ptr1 = ptr2-1;
 				ptr2 = ptr1+2;
 			}

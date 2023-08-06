@@ -343,14 +343,17 @@ namespace globalPlanner{
 				// lineValidCheck = this->map_->isInflatedFreeLine(pos1, pos2);
 			// }
 			if (lineValidCheck and KDTree:: Distance(p1, p2) <= this->maxShortcutThresh_){
-
-				if (ptr2 >= plan.size()-1){
+				if (ptr2 == plan.size()-1){
 					planSc.push_back(p2);
 					break;
 				}
 				++ptr2;
 			}
 			else{
+				if (ptr2 == plan.size()-1){
+					planSc.push_back(p2);
+					break;
+				}
 				planSc.push_back(plan[ptr2-1]);
 				ptr1 = ptr2-1;
 				ptr2 = ptr1+2;
