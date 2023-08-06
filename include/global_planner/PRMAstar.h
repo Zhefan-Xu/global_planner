@@ -23,7 +23,7 @@ namespace PRM{
 		std::vector<std::shared_ptr<Node>> path;
 
 		// open: priority queue
-		std::priority_queue<std::shared_ptr<Node>, std::vector<std::shared_ptr<Node>>> open;
+		std::priority_queue<std::shared_ptr<Node>, std::vector<std::shared_ptr<Node>>, CompareNode> open;
 		start->g = 0.0;
 		open.push(start);
 
