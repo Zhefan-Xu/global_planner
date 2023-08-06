@@ -81,6 +81,7 @@ namespace PRM{
 			double maxYaw = 0;
 			for (auto key : yawNumVoxels){
 				if (key.second > maxNum){
+					maxNum = key.second;
 					maxYaw = key.first;
 				}
 			}

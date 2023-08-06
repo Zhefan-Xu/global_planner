@@ -545,7 +545,6 @@ namespace globalPlanner{
 			std::vector<std::shared_ptr<PRM::Node>> pathSc;
 			this->shortcutPath(path, pathSc);
 			candidatePaths.push_back(pathSc);
-		
 		}
 
 		return findPath;
@@ -570,7 +569,7 @@ namespace globalPlanner{
 
 			double distance = this->calculatePathLength(path);
 			double score = double(unknownVoxel)/distance; 
-			// cout << "unknown for path: " << n <<  " is: " << unknownVoxel << " score: " << score << endl;
+			cout << "unknown for path: " << n <<  " is: " << unknownVoxel << " score: " << score << " distance: " << distance <<  " Last total unknown: " << path.back()->numVoxels << " last best: " << path.back()->getBestYawVoxel() << endl;
 			if (score > highestScore){
 				highestScore = score;
 				bestPath = path;
@@ -908,9 +907,9 @@ namespace globalPlanner{
 
 		double zRange = this->dmax_ * tan(this->verticalFOV_/2.0);
 		int countTotalUnknown = 0;
-		for (double z = p(2) - zRange; z < p(2) + zRange; z += this->map_->getRes()){
-			for (double y = p(1) - this->dmax_; y < p(1)+ this->dmax_; y += this->map_->getRes()){
-				for (double x = p(0) - this->dmax_; x < p(0) + this->dmax_; x += this->map_->getRes()){
+		for (double z = p(2) - zRange; z <= p(2) + zRange; z += this->map_->getRes()){
+			for (double y = p(1) - this->dmax_; y <= p(1)+ this->dmax_; y += this->map_->getRes()){
+				for (double x = p(0) - this->dmax_; x <= p(0) + this->dmax_; x += this->map_->getRes()){
 					Eigen::Vector3d nodePoint (x, y, z);
 					if (this->map_->isUnknown(nodePoint)){
 						if (this->sensorFOVCondition(nodePoint, p)){
