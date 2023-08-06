@@ -566,9 +566,9 @@ namespace globalPlanner{
 				double angle = angleBetweenVectors(currNode->pos, nextNode->pos);
 				unknownVoxel += currNode->getUnknownVoxels(angle);
 			}
-			unknownVoxel += path.back()->yawNumVoxels[path.back()->getBestYaw()];
+			unknownVoxel += path.back()->getBestYawVoxel();
 
-			double distance = calculatePathLength(path);
+			double distance = this->calculatePathLength(path);
 			double score = double(unknownVoxel)/distance; 
 			// cout << "unknown for path: " << n <<  " is: " << unknownVoxel << " score: " << score << endl;
 			if (score > highestScore){
