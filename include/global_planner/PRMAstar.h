@@ -61,7 +61,7 @@ namespace PRM{
 			for (std::shared_ptr<Node> neighborNode : currNode->adjNodes){
 				// Node must be not in close
 				if (not inClose(neighborNode, close)){
-					// if (map->isInflatedFreeLine(currNode->pos, neighborNode->pos)){
+					if (map->isInflatedFreeLine(currNode->pos, neighborNode->pos)){
 						double cost = currNode->g + (currNode->pos - neighborNode->pos).norm();
 						if (cost < neighborNode->g){
 							neighborNode->g = cost;
@@ -70,7 +70,7 @@ namespace PRM{
 							neighborNode->parent = currNode;
 							record.push_back(neighborNode);
 						}
-					// }
+					}
 				}
 			}
 		}

@@ -271,14 +271,21 @@ namespace globalPlanner{
 
 	nav_msgs::Path DEP::getBestPath(){
 		nav_msgs::Path bestPath;
-		for (std::shared_ptr<PRM::Node>& n : this->bestPath_){
+		for (int i=0; i<int(this->bestPath_.size()); ++i){
+			std::shared_ptr<PRM::Node> currNode = this->bestPath_[i];
 			geometry_msgs::PoseStamped p;
-			p.pose.position.x = n->pos(0);
-			p.pose.position.y = n->pos(1);
-			p.pose.position.z = n->pos(2);
+			p.pose.position.x = currNode->pos(0);
+			p.pose.position.y = currNode->pos(1);
+			p.pose.position.z = currNode->pos(2);
+			if (i < int(this->bestPath_.size())-1){
+				std::shared_ptr<PRM::Node> nextNode = this->bestPath_[i+1];
+				Eigen::Vector3d diff = nextNode->pos - currNode->pos;
+				double angle = atan2(diff(1), diff(0));
+				p.pose.orientation = globalPlanner::quaternion_from_rpy(0, 0, angle);
+			}
 			bestPath.poses.push_back(p);
 		}
-
+		
 		// get the best yaw for the last pose
 		double bestYaw = this->bestPath_.back()->getBestYaw();
 		bestPath.poses.back().pose.orientation = globalPlanner::quaternion_from_rpy(0, 0, bestYaw);
@@ -562,7 +569,8 @@ namespace globalPlanner{
 			for (int i=0; i<int(path.size())-1; ++i){
 				std::shared_ptr<PRM::Node> currNode = path[i];
 				std::shared_ptr<PRM::Node> nextNode = path[i+1];
-				double angle = angleBetweenVectors(currNode->pos, nextNode->pos);
+				Eigen::Vector3d diff = nextNode->pos - currNode->pos;
+				double angle = atan2(diff(1), diff(0));
 				unknownVoxel += currNode->getUnknownVoxels(angle);
 			}
 			unknownVoxel += path.back()->getBestYawVoxel();
@@ -965,8 +973,9 @@ namespace globalPlanner{
 			// lineValidCheck = not this->map_->isInflatedOccupiedLine(pos1, pos2);
 			lineValidCheck = this->map_->isInflatedFreeLine(pos1, pos2);
 			// double maxDistance = std::numeric_limits<double>::max();
-			double maxDistance = 3.0;
-			if (lineValidCheck and (pos1 - pos2).norm() <= maxDistance){
+			// double maxDistance = 3.0;
+			// if (lineValidCheck and (pos1 - pos2).norm() <= maxDistance){
+			if (lineValidCheck){
 				if (ptr2 == path.size()-1){
 					pathSc.push_back(p2);
 					break;
