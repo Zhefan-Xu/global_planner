@@ -32,7 +32,11 @@ namespace globalPlanner{
 		std::shared_ptr<PRM::KDTree> roadmap_;
 
 
+
+
 		// parameters
+		double vel_ = 1.0;
+		double angularVel_ = 1.0;
 		std::string odomTopic_;
 		Eigen::Vector3d globalRegionMin_, globalRegionMax_;
 		Eigen::Vector3d localRegionMin_, localRegionMax_;
@@ -66,6 +70,7 @@ namespace globalPlanner{
 		DEP(const ros::NodeHandle& nh);
 
 		void setMap(const std::shared_ptr<mapManager::occMap>& map);
+		void loadVelocity(double vel, double angularVel);
 		void initParam();
 		void initModules();
 		void registerPub();

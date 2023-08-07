@@ -22,6 +22,11 @@ namespace globalPlanner{
 		this->map_ = map;
 	}
 
+	void DEP::loadVelocity(double vel, double angularVel){
+		this->vel_ = vel;
+		this->angularVel_ = angularVel;
+	}
+
 	void DEP::initParam(){
 		// odom topic name
 		if (not this->nh_.getParam(this->ns_ + "/odom_topic", this->odomTopic_)){
@@ -565,6 +570,8 @@ namespace globalPlanner{
 			std::vector<std::shared_ptr<PRM::Node>> path = candidatePaths[n]; 
 			if (int(path.size()) == 0) continue;
 
+			double yawDist = 0;
+			double prevYaw = this->currYaw_;
 			int unknownVoxel = 0;
 			for (int i=0; i<int(path.size())-1; ++i){
 				std::shared_ptr<PRM::Node> currNode = path[i];
@@ -572,12 +579,17 @@ namespace globalPlanner{
 				Eigen::Vector3d diff = nextNode->pos - currNode->pos;
 				double angle = atan2(diff(1), diff(0));
 				unknownVoxel += currNode->getUnknownVoxels(angle);
+				yawDist += globalPlanner::angleDiff(prevYaw, angle);
+				prevYaw = angle;
 			}
 			unknownVoxel += path.back()->getBestYawVoxel();
+			yawDist += globalPlanner::angleDiff(prevYaw, path.back()->getBestYaw());
 
 			double distance = this->calculatePathLength(path);
-			double score = double(unknownVoxel)/distance; 
-			// cout << "unknown for path: " << n <<  " is: " << unknownVoxel << " score: " << score << " distance: " << distance <<  " Last total unknown: " << path.back()->numVoxels << " last best: " << path.back()->getBestYawVoxel() << endl;
+			// cout << "total is distance is: " << distance << " total yaw distance is: " << yawDist << " voxel: " << path.back()->numVoxels << endl;
+			double pathTime = distance/this->vel_ + yawDist/this->angularVel_;
+			double score = double(unknownVoxel)/pathTime; 
+			cout << "unknown for path: " << n <<  " is: " << unknownVoxel << " score: " << score << " distance: " << distance << " Time: " << pathTime <<  " Last total unknown: " << path.back()->numVoxels << " last best: " << path.back()->getBestYawVoxel() << endl;
 			if (score > highestScore){
 				highestScore = score;
 				bestPath = path;
@@ -919,7 +931,14 @@ namespace globalPlanner{
 			for (double y = p(1) - this->dmax_; y <= p(1)+ this->dmax_; y += this->map_->getRes()){
 				for (double x = p(0) - this->dmax_; x <= p(0) + this->dmax_; x += this->map_->getRes()){
 					Eigen::Vector3d nodePoint (x, y, z);
-					if (this->map_->isUnknown(nodePoint)){
+					if (nodePoint(0) < this->globalRegionMin_(0) or nodePoint(0) > this->globalRegionMax_(0) or
+						nodePoint(1) < this->globalRegionMin_(1) or nodePoint(1) > this->globalRegionMax_(1) or
+						nodePoint(2) < this->globalRegionMin_(2) or nodePoint(2) > this->globalRegionMax_(2)){
+						// not in global range
+						continue;
+					}
+
+					if (this->map_->isUnknown(nodePoint) and not this->map_->isInflatedOccupied(nodePoint)){
 						if (this->sensorFOVCondition(nodePoint, p)){
 							++countTotalUnknown;
 							for (double yaw: this->yaws_){
