@@ -13,6 +13,8 @@
 #include <global_planner/PRMKDTree.h>
 #include <global_planner/PRMAstar.h>
 #include <global_planner/utils.h>
+#include <opencv2/opencv.hpp>
+
 
 namespace globalPlanner{
 	class DEP{
@@ -78,6 +80,7 @@ namespace globalPlanner{
 
 		bool makePlan();
 		nav_msgs::Path getBestPath();
+		void detectFrontierRegion();
 		void buildRoadMap();
 		void updateInformationGain();
 		void getBestViewCandidates(std::vector<std::shared_ptr<PRM::Node>>& goalCandidates);

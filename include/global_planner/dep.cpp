@@ -251,6 +251,8 @@ namespace globalPlanner{
 
 	bool DEP::makePlan(){
 		if (not this->odomReceived_) return false;
+		this->detectFrontierRegion();
+
 		this->buildRoadMap();
 
 
@@ -350,6 +352,62 @@ namespace globalPlanner{
 		}
 		
 	}
+
+	void DEP::detectFrontierRegion(){
+		Eigen::Vector3d mapMin, mapMax;
+		this->map_->getMapRange(mapMin, mapMax);
+		int numRow = (mapMax(1) - mapMin(1))/this->map_->getRes() + 1;
+		int numCol = (mapMax(0) - mapMin(0))/this->map_->getRes() + 1;
+
+		cv::SimpleBlobDetector detector;
+		// cv::Mat im (numRow, numCol, CV_8UC1);
+		std::vector<cv::Mat> imgVec;
+		// find height levels to slice the map
+		double heightRes = 0.3;
+		for (double h=this->globalRegionMin_(2); h<=this->globalRegionMax_(2); h+=heightRes){
+			int col = 0;
+			cv::Mat im (numRow, numCol, CV_8UC1);
+			for (double y=mapMin(1); y<=mapMax(1); y+=this->map_->getRes()){
+				int row = 0;
+				for (double x=mapMin(0); x<=mapMax(0); x+=this->map_->getRes()){
+					Eigen::Vector3d p (x, y, h);
+					if (this->map_->isInflatedOccupied(p)){
+						im.at<uchar>(col, row) = 0;
+					}
+					else if (this->map_->isInflatedFree(p)){
+						im.at<uchar>(col, row) = 255;
+					}
+					else{
+						im.at<uchar>(col, row) = (255 + 0)/2;
+					}
+					++row;
+				}
+				++col;
+			}
+			// cv::imwrite("test.jpg", im);
+			cv::imshow("Display Window", im);
+			cv::waitKey(0);
+			imgVec.push_back(im);
+		}
+
+		// // cv::imwrite("temp.jpg", im);
+		// std::string imgName = "img";
+
+		// int i=0;
+		// for (cv::Mat img : imgVec){
+		// 	cout << "image: " << i << endl;
+		// 	std::string name = imgName + std::to_string(i) + ".jpg";
+		// 	cv::imwrite(name, img);
+		// 	++i;
+		// }
+
+		// slice the map and make the image
+
+		// detect each image and find the corresponding 3D positions
+
+		// extends nearest neighbor in the map to those region (in map build function)
+	}
+
 	void DEP::buildRoadMap(){
 		std::vector<std::shared_ptr<PRM::Node>> path;
 		bool saturate = false;
