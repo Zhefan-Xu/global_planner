@@ -589,7 +589,7 @@ namespace globalPlanner{
 			// cout << "total is distance is: " << distance << " total yaw distance is: " << yawDist << " voxel: " << path.back()->numVoxels << endl;
 			double pathTime = distance/this->vel_ + yawDist/this->angularVel_;
 			double score = double(unknownVoxel)/pathTime; 
-			cout << "unknown for path: " << n <<  " is: " << unknownVoxel << " score: " << score << " distance: " << distance << " Time: " << pathTime <<  " Last total unknown: " << path.back()->numVoxels << " last best: " << path.back()->getBestYawVoxel() << endl;
+			// cout << "unknown for path: " << n <<  " is: " << unknownVoxel << " score: " << score << " distance: " << distance << " Time: " << pathTime <<  " Last total unknown: " << path.back()->numVoxels << " last best: " << path.back()->getBestYawVoxel() << endl;
 			if (score > highestScore){
 				highestScore = score;
 				bestPath = path;
