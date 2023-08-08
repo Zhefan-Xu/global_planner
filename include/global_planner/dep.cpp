@@ -355,13 +355,16 @@ namespace globalPlanner{
 
 	void DEP::detectFrontierRegion(){
 		Eigen::Vector3d mapMin, mapMax;
-		this->map_->getMapRange(mapMin, mapMax);
+		this->map_->getCurrMapRange(mapMin, mapMax);
 		int numRow = (mapMax(1) - mapMin(1))/this->map_->getRes() + 1;
 		int numCol = (mapMax(0) - mapMin(0))/this->map_->getRes() + 1;
 
-		cv::SimpleBlobDetector detector;
-		// cv::Mat im (numRow, numCol, CV_8UC1);
+		cv::SimpleBlobDetector::Params params;
+		params.minThreshold = 10;  // Minimum threshold for blob intensity
+		params.maxThreshold = 200; // Maximum threshold for blob intensity
+		cv::Ptr<cv::SimpleBlobDetector> detector = cv::SimpleBlobDetector::create(params);
 		std::vector<cv::Mat> imgVec;
+
 		// find height levels to slice the map
 		double heightRes = 0.3;
 		for (double h=this->globalRegionMin_(2); h<=this->globalRegionMax_(2); h+=heightRes){
@@ -384,26 +387,32 @@ namespace globalPlanner{
 				}
 				++col;
 			}
-			// cv::imwrite("test.jpg", im);
-			cv::imshow("Display Window", im);
-			cv::waitKey(0);
+			
+			
 			imgVec.push_back(im);
 		}
 
-		// // cv::imwrite("temp.jpg", im);
-		// std::string imgName = "img";
 
-		// int i=0;
 		// for (cv::Mat img : imgVec){
-		// 	cout << "image: " << i << endl;
-		// 	std::string name = imgName + std::to_string(i) + ".jpg";
-		// 	cv::imwrite(name, img);
-		// 	++i;
+		// 	cv::Mat flippedIm;
+		// 	cv::flip(img, flippedIm, 0);
+		// 	cv::imshow("Display Window", flippedIm);
+		// 	cv::waitKey(0);
 		// }
 
-		// slice the map and make the image
 
 		// detect each image and find the corresponding 3D positions
+		
+		for (cv::Mat img : imgVec){
+			std::vector<cv::KeyPoint> keypoints;
+			detector->detect(img, keypoints);
+
+			cv::Mat imgWithKeypoints;
+			cv::drawKeypoints(img, keypoints, imgWithKeypoints,  cv::Scalar(0, 0, 255), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
+
+			cv::imshow("Blobs with Keypoints", imgWithKeypoints);
+			cv::waitKey(0);
+		} 
 
 		// extends nearest neighbor in the map to those region (in map build function)
 	}
