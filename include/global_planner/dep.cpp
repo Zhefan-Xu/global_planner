@@ -238,6 +238,9 @@ namespace globalPlanner{
 
 		// best path publisher
 		this->bestPathPub_ = this->nh_.advertise<visualization_msgs::MarkerArray>("/dep/best_paths", 1000);
+
+		// fronteir vis publisher
+		this->frontierVisPub_ = this->nh_.advertise<visualization_msgs::MarkerArray>("/dep/frontier_regions", 1000);
 	}
 
 	void DEP::registerCallback(){
@@ -251,7 +254,7 @@ namespace globalPlanner{
 
 	bool DEP::makePlan(){
 		if (not this->odomReceived_) return false;
-		this->detectFrontierRegion();
+		this->detectFrontierRegion(this->frontierPointPairs_);
 
 		this->buildRoadMap();
 
@@ -353,68 +356,75 @@ namespace globalPlanner{
 		
 	}
 
-	void DEP::detectFrontierRegion(){
+	void DEP::detectFrontierRegion(std::vector<std::pair<Eigen::Vector3d, double>>& frontierPointPairs){
+		frontierPointPairs.clear();
+
 		Eigen::Vector3d mapMin, mapMax;
 		this->map_->getCurrMapRange(mapMin, mapMax);
 		int numRow = (mapMax(1) - mapMin(1))/this->map_->getRes() + 1;
 		int numCol = (mapMax(0) - mapMin(0))/this->map_->getRes() + 1;
 
 		cv::SimpleBlobDetector::Params params;
-		params.minThreshold = 10;  // Minimum threshold for blob intensity
-		params.maxThreshold = 200; // Maximum threshold for blob intensity
+		params.filterByColor = true;
+		params.blobColor = 255;
+		params.filterByConvexity = true;
+    	params.minConvexity = 0.1;;
 		cv::Ptr<cv::SimpleBlobDetector> detector = cv::SimpleBlobDetector::create(params);
 		std::vector<cv::Mat> imgVec;
-
+		cout << "num row: " << numRow << endl;
+		cout << "num col: " << numCol << endl;
 		// find height levels to slice the map
 		double heightRes = 0.3;
+		int col = 0;
+		int row = 0;
 		for (double h=this->globalRegionMin_(2); h<=this->globalRegionMax_(2); h+=heightRes){
-			int col = 0;
+			col = 0;
 			cv::Mat im (numRow, numCol, CV_8UC1);
 			for (double y=mapMin(1); y<=mapMax(1); y+=this->map_->getRes()){
-				int row = 0;
+				row = 0;
 				for (double x=mapMin(0); x<=mapMax(0); x+=this->map_->getRes()){
 					Eigen::Vector3d p (x, y, h);
 					if (this->map_->isInflatedOccupied(p)){
 						im.at<uchar>(col, row) = 0;
 					}
 					else if (this->map_->isInflatedFree(p)){
-						im.at<uchar>(col, row) = 255;
+						im.at<uchar>(col, row) = 255/2;
 					}
 					else{
-						im.at<uchar>(col, row) = (255 + 0)/2;
+						im.at<uchar>(col, row) = 255;
 					}
 					++row;
 				}
 				++col;
 			}
-			
-			
+			cout << "col: " << col << " row: " << row << endl;
 			imgVec.push_back(im);
 		}
 
 
-		// for (cv::Mat img : imgVec){
-		// 	cv::Mat flippedIm;
-		// 	cv::flip(img, flippedIm, 0);
-		// 	cv::imshow("Display Window", flippedIm);
-		// 	cv::waitKey(0);
-		// }
-
 
 		// detect each image and find the corresponding 3D positions
-		
+		double height = this->globalRegionMin_(2);
 		for (cv::Mat img : imgVec){
 			std::vector<cv::KeyPoint> keypoints;
 			detector->detect(img, keypoints);
 
-			cv::Mat imgWithKeypoints;
-			cv::drawKeypoints(img, keypoints, imgWithKeypoints,  cv::Scalar(0, 0, 255), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
+			// convert keypoints back to the map coordinate
+			for (cv::KeyPoint keypoint : keypoints){
+				Eigen::Vector3d p (mapMin(0) + keypoint.pt.x * this->map_->getRes(), mapMin(1) + keypoint.pt.y * this->map_->getRes(), height);
+				double dist = keypoint.size * this->map_->getRes();
+				frontierPointPairs.push_back({p, dist});
+			}
 
-			cv::imshow("Blobs with Keypoints", imgWithKeypoints);
-			cv::waitKey(0);
+			height += heightRes;
+
+			// cv::Mat imgWithKeypoints;
+			// cv::drawKeypoints(img, keypoints, imgWithKeypoints,  cv::Scalar(0, 0, 255), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
+
+			// cv::imshow("Blobs with Keypoints", imgWithKeypoints);
+			// cv::imwrite("/home/zhefan/Desktop/temp/test.jpg", img);
+			// cv::waitKey(0);
 		} 
-
-		// extends nearest neighbor in the map to those region (in map build function)
 	}
 
 	void DEP::buildRoadMap(){
@@ -697,8 +707,12 @@ namespace globalPlanner{
 			this->publishCandidatePaths();
 		}
 
-		if (this->bestPath_.size()!=0){
+		if (this->bestPath_.size() != 0){
 			this->publishBestPath();
+		}
+
+		if (this->frontierPointPairs_.size() != 0){
+			this->publishFrontier();
 		}
 	}
 
@@ -933,6 +947,38 @@ namespace globalPlanner{
 			}
 		}
 		this->bestPathPub_.publish(bestPathMarkers);		
+	}
+
+	void DEP::publishFrontier(){
+		visualization_msgs::MarkerArray frontierMarkers;
+		int frontierRangeCount = 0;
+		for (int i=0; i<int(this->frontierPointPairs_.size()); ++i){
+			visualization_msgs::Marker range;
+
+			Eigen::Vector3d p = this->frontierPointPairs_[i].first;
+			double dist = this->frontierPointPairs_[i].second;
+
+			range.header.frame_id = "map";
+			range.header.stamp = ros::Time::now();
+			range.ns = "frontier range";
+			range.id = frontierRangeCount;
+			range.type = visualization_msgs::Marker::SPHERE;
+			range.action = visualization_msgs::Marker::ADD;
+			range.pose.position.x = p(0);
+			range.pose.position.y = p(1);
+			range.pose.position.z = p(2);
+			range.lifetime = ros::Duration(0.5);
+			range.scale.x = dist;
+			range.scale.y = dist;
+			range.scale.z = 0.1;
+			range.color.a = 0.4;
+			range.color.r = 0.0;
+			range.color.g = 0.0;
+			range.color.b = 1.0;
+			++frontierRangeCount;
+			frontierMarkers.markers.push_back(range);			
+		}
+		this->frontierVisPub_.publish(frontierMarkers);
 	}
 
 

@@ -26,6 +26,7 @@ namespace globalPlanner{
 		ros::Publisher roadmapPub_;
 		ros::Publisher candidatePathPub_;
 		ros::Publisher bestPathPub_;
+		ros::Publisher frontierVisPub_;
 		ros::Subscriber odomSub_;
 		ros::Timer visTimer_;
 
@@ -66,6 +67,7 @@ namespace globalPlanner{
 		std::vector<std::shared_ptr<PRM::Node>> goalCandidates_;
 		std::vector<std::vector<std::shared_ptr<PRM::Node>>> candidatePaths_;
 		std::vector<std::shared_ptr<PRM::Node>> bestPath_;
+		std::vector<std::pair<Eigen::Vector3d, double>> frontierPointPairs_;
 
 
 	public:
@@ -80,7 +82,7 @@ namespace globalPlanner{
 
 		bool makePlan();
 		nav_msgs::Path getBestPath();
-		void detectFrontierRegion();
+		void detectFrontierRegion(std::vector<std::pair<Eigen::Vector3d, double>>& frontierPointPairs);
 		void buildRoadMap();
 		void updateInformationGain();
 		void getBestViewCandidates(std::vector<std::shared_ptr<PRM::Node>>& goalCandidates);
@@ -96,6 +98,7 @@ namespace globalPlanner{
 		void publishRoadmap();
 		void publishCandidatePaths();
 		void publishBestPath();
+		void publishFrontier();
 
 		// help function
 		bool isPosValid(const Eigen::Vector3d& p, double safeDist);
