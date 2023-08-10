@@ -446,24 +446,39 @@ namespace globalPlanner{
 		int frontierSampleThresh = 50;
 		int countFrontierFailure = 0;
 		int frontierNeighborNum = 10;
+		double safeDist = 0.3;
 		while (ros::ok() and countFrontierFailure < frontierSampleThresh and sampleWeights.size() != 0){
 			std::shared_ptr<PRM::Node> fn = this->sampleFrontierPoint(sampleWeights);
 			// a. find N nearest neighbors
 			std::vector<std::shared_ptr<PRM::Node>> fnNeighbors = this->roadmap_->kNearestNeighbor(fn, frontierNeighborNum);
 
-			// b. 
+			// b. for each neighbor extend them and check the validity
+			if (int(fnNeighbors.size()) > 0){
+				int countSampleOnce = 0;
+				for (std::shared_ptr<PRM::Node> fnNN : fnNeighbors){
+					n = this->extendNode(fnNN, fn);
+					if (this->isPosValid(n->pos, safeDist)){
+						std::shared_ptr<PRM::Node> nn = this->roadmap_->nearestNeighbor(n);
+						double distToNN = (n->pos - nn->pos).norm();
+						if (distToNN >= this->distThresh_){
+							this->roadmap_->insert(n);
+							newNodes.push_back(n);
+							this->prmNodeVec_.push_back(n);
+							++countSample;	
+							++countSampleOnce;
+						}
+					}
+				}
+				if (countSampleOnce == 0){
+					++countFrontierFailure;
+				}
 
-			// if (n == NULL){
-			// 	++countFrontierFailure;
-			// }
-			// else{
-			// 	this->roadmap_->insert(n);
-			// 	newNodes.push_back(n);
-			// 	this->prmNodeVec_.push_back(n);
-			// 	++countSample;
-			// }
+			}
+			else{ // not enough neighbor
+				break;
+			}
 		}
-
+		cout << "added sample from frontier:  " << countSample << endl;
 
 		while (ros::ok() and not saturate){
 			if (regionSaturate){
@@ -707,26 +722,6 @@ namespace globalPlanner{
 		}
 	}
 
-	std::shared_ptr<PRM::Node> DEP::sampleFrontierPoint(const std::vector<double>& sampleWeights){
-		// choose the frontier region (random sample by frontier area) 
-		int idx = weightedSample(sampleWeights);
-
-		// sample a frontier point in the region
-		Eigen::Vector3d frontierCenter = this->frontierPointPairs_[idx].first;
-		double frontierSize = this->frontierPointPairs_[idx].second;
-		double xmin = std::max(frontierCenter(0) - frontierSize/sqrt(2), this->globalRegionMin_(0));
-		double xmax = std::min(frontierCenter(0) + frontierSize/sqrt(2), this->globalRegionMax_(0));
-		double ymin = std::max(frontierCenter(1) - frontierSize/sqrt(2), this->globalRegionMin_(1));
-		double ymax = std::min(frontierCenter(1) + frontierSize/sqrt(2), this->globalRegionMax_(1));
-		double zmin = frontierCenter(2);
-		double zmax = frontierCenter(2);
-		Eigen::Vector3d frontierPoint;
-		frontierPoint(0) = globalPlanner::randomNumber(xmin, xmax);
-		frontierPoint(1) = globalPlanner::randomNumber(ymin, ymax);
-		frontierPoint(2) = globalPlanner::randomNumber(zmin, zmax);
-		std::shared_ptr<PRM::Node> frontierNode (new PRM::Node(frontierPoint));
-		return frontierNode;
-	}
 
 	void DEP::odomCB(const nav_msgs::OdometryConstPtr& odom){
 		this->odom_ = *odom;
@@ -768,6 +763,195 @@ namespace globalPlanner{
 		if (this->frontierPointPairs_.size() != 0){
 			this->publishFrontier();
 		}
+	}
+
+
+
+	bool DEP::isPosValid(const Eigen::Vector3d& p, double safeDist){
+		for (double x=p(0)-safeDist; x<=p(0)+safeDist; x+=this->map_->getRes()){
+			for (double y=p(1)-safeDist; y<=p(1)+safeDist; y+=this->map_->getRes()){
+				for (double z=p(2)-safeDist; z<=p(2)+safeDist; z+=this->map_->getRes()){
+					if (not this->map_->isInflatedFree(Eigen::Vector3d (x, y, z))){
+						return false;
+					}
+				}
+			}
+		}
+		return true;		
+	}
+
+	std::shared_ptr<PRM::Node> DEP::randomConfigBBox(const Eigen::Vector3d& minRegion, const Eigen::Vector3d& maxRegion){
+		Eigen::Vector3d mapMinRegion, mapMaxRegion, minSampleRegion, maxSampleRegion;
+		this->map_->getCurrMapRange(mapMinRegion, mapMaxRegion);
+		// cout << "current map range is: " << mapMinRegion.transpose() << ", " << mapMaxRegion.transpose() << endl;
+		minSampleRegion(0) = std::max(mapMinRegion(0), minRegion(0));
+		minSampleRegion(1) = std::max(mapMinRegion(1), minRegion(1));
+		minSampleRegion(2) = std::max(mapMinRegion(2), minRegion(2));
+		maxSampleRegion(0) = std::min(mapMaxRegion(0), maxRegion(0));
+		maxSampleRegion(1) = std::min(mapMaxRegion(1), maxRegion(1));
+		maxSampleRegion(2) = std::min(mapMaxRegion(2), maxRegion(2));
+
+		minSampleRegion(0) = std::max(minSampleRegion(0), this->globalRegionMin_(0));
+		minSampleRegion(1) = std::max(minSampleRegion(1), this->globalRegionMin_(1));
+		minSampleRegion(2) = std::max(minSampleRegion(2), this->globalRegionMin_(2));
+		maxSampleRegion(0) = std::min(maxSampleRegion(0), this->globalRegionMax_(0));
+		maxSampleRegion(1) = std::min(maxSampleRegion(1), this->globalRegionMax_(1));
+		maxSampleRegion(2) = std::min(maxSampleRegion(2), this->globalRegionMax_(2));
+
+
+		bool valid = false;
+		double safeDist = 0.3;
+		Eigen::Vector3d p;
+		while (valid == false){	
+			p(0) = globalPlanner::randomNumber(minSampleRegion(0), maxSampleRegion(0));
+			p(1) = globalPlanner::randomNumber(minSampleRegion(1), maxSampleRegion(1));
+			p(2) = globalPlanner::randomNumber(minSampleRegion(2), maxSampleRegion(2));
+
+			valid = this->isPosValid(p, safeDist);
+
+			// valid = this->map_->isInflatedFree(p);
+		}
+
+		std::shared_ptr<PRM::Node> newNode (new PRM::Node(p));
+		return newNode;
+	}
+
+	int DEP::calculateUnknown(const shared_ptr<PRM::Node>& n, std::unordered_map<double, int>& yawNumVoxels){
+		for (double yaw : this->yaws_){
+			yawNumVoxels[yaw] = 0;
+		}
+		// Position:
+		Eigen::Vector3d p = n->pos;
+
+		double zRange = this->dmax_ * tan(this->verticalFOV_/2.0);
+		int countTotalUnknown = 0;
+		for (double z = p(2) - zRange; z <= p(2) + zRange; z += this->map_->getRes()){
+			for (double y = p(1) - this->dmax_; y <= p(1)+ this->dmax_; y += this->map_->getRes()){
+				for (double x = p(0) - this->dmax_; x <= p(0) + this->dmax_; x += this->map_->getRes()){
+					Eigen::Vector3d nodePoint (x, y, z);
+					if (nodePoint(0) < this->globalRegionMin_(0) or nodePoint(0) > this->globalRegionMax_(0) or
+						nodePoint(1) < this->globalRegionMin_(1) or nodePoint(1) > this->globalRegionMax_(1) or
+						nodePoint(2) < this->globalRegionMin_(2) or nodePoint(2) > this->globalRegionMax_(2)){
+						// not in global range
+						continue;
+					}
+
+					if (this->map_->isUnknown(nodePoint) and not this->map_->isInflatedOccupied(nodePoint)){
+						if (this->sensorFOVCondition(nodePoint, p)){
+							++countTotalUnknown;
+							for (double yaw: this->yaws_){
+								Eigen::Vector3d yawDirection (cos(yaw), sin(yaw), 0);
+								Eigen::Vector3d direction = nodePoint - p;
+								Eigen::Vector3d face (direction(0), direction(1), 0);
+								double angleToYaw = angleBetweenVectors(face, yawDirection);
+								if (angleToYaw <= this->horizontalFOV_/2){
+									yawNumVoxels[yaw] += 1;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		return countTotalUnknown;
+	}
+	double DEP::calculatePathLength(const std::vector<shared_ptr<PRM::Node>>& path){
+		int idx1 = 0;
+		double length = 0;
+		for (size_t idx2=1; idx2<=path.size()-1; ++idx2){
+			length += (path[idx2]->pos - path[idx1]->pos).norm();
+			++idx1;
+		}
+		return length;
+	}
+
+	void DEP::shortcutPath(const std::vector<std::shared_ptr<PRM::Node>>& path, std::vector<std::shared_ptr<PRM::Node>>& pathSc){
+		size_t ptr1 = 0; size_t ptr2 = 2;
+		pathSc.push_back(path[ptr1]);
+
+		if (path.size() == 1){
+			return;
+		}
+
+		if (path.size() == 2){
+			pathSc.push_back(path[1]);
+			return;
+		}
+
+		while (ros::ok()){
+			if (ptr2 > path.size()-1){
+				break;
+			}
+			std::shared_ptr<PRM::Node> p1 = path[ptr1];
+			std::shared_ptr<PRM::Node> p2 = path[ptr2];
+			Eigen::Vector3d pos1 = p1->pos;
+			Eigen::Vector3d pos2 = p2->pos;
+			bool lineValidCheck;
+			// lineValidCheck = not this->map_->isInflatedOccupiedLine(pos1, pos2);
+			lineValidCheck = this->map_->isInflatedFreeLine(pos1, pos2);
+			// double maxDistance = std::numeric_limits<double>::max();
+			// double maxDistance = 3.0;
+			// if (lineValidCheck and (pos1 - pos2).norm() <= maxDistance){
+			if (lineValidCheck){
+				if (ptr2 == path.size()-1){
+					pathSc.push_back(p2);
+					break;
+				}
+				++ptr2;
+			}
+			else{
+				pathSc.push_back(path[ptr2-1]);
+				if (ptr2 == path.size()-1){
+					pathSc.push_back(p2);
+					break;
+				}
+				ptr1 = ptr2-1;
+				ptr2 = ptr1+2;
+			}
+		}		
+	}
+
+	int DEP::weightedSample(const std::vector<double>& weights){
+		double total = std::accumulate(weights.begin(), weights.end(), 0.0);
+		std::vector<double> normalizedWeights;
+
+		 for (const double weight : weights){
+		 	normalizedWeights.push_back(weight/total);
+		 }
+
+		std::random_device rd;
+		std::mt19937 gen(rd());
+		std::discrete_distribution<int> distribution(normalizedWeights.begin(), normalizedWeights.end());
+		return distribution(gen);
+	}
+
+
+	std::shared_ptr<PRM::Node> DEP::sampleFrontierPoint(const std::vector<double>& sampleWeights){
+		// choose the frontier region (random sample by frontier area) 
+		int idx = weightedSample(sampleWeights);
+
+		// sample a frontier point in the region
+		Eigen::Vector3d frontierCenter = this->frontierPointPairs_[idx].first;
+		double frontierSize = this->frontierPointPairs_[idx].second;
+		double xmin = std::max(frontierCenter(0) - frontierSize/sqrt(2), this->globalRegionMin_(0));
+		double xmax = std::min(frontierCenter(0) + frontierSize/sqrt(2), this->globalRegionMax_(0));
+		double ymin = std::max(frontierCenter(1) - frontierSize/sqrt(2), this->globalRegionMin_(1));
+		double ymax = std::min(frontierCenter(1) + frontierSize/sqrt(2), this->globalRegionMax_(1));
+		double zmin = frontierCenter(2);
+		double zmax = frontierCenter(2);
+		Eigen::Vector3d frontierPoint;
+		frontierPoint(0) = globalPlanner::randomNumber(xmin, xmax);
+		frontierPoint(1) = globalPlanner::randomNumber(ymin, ymax);
+		frontierPoint(2) = globalPlanner::randomNumber(zmin, zmax);
+		std::shared_ptr<PRM::Node> frontierNode (new PRM::Node(frontierPoint));
+		return frontierNode;
+	}
+
+	std::shared_ptr<PRM::Node> DEP::extendNode(const std::shared_ptr<PRM::Node>& n, const std::shared_ptr<PRM::Node>& target){
+		double extendDist = randomNumber(this->distThresh_, this->maxConnectDist_);
+		Eigen::Vector3d p = n->pos + (target->pos - n->pos)/(target->pos - n->pos).norm() * extendDist;
+		std::shared_ptr<PRM::Node> extendedNode (new PRM::Node(p));
+		return extendedNode;
 	}
 
 	void DEP::publishRoadmap(){
@@ -1035,162 +1219,4 @@ namespace globalPlanner{
 		this->frontierVisPub_.publish(frontierMarkers);
 	}
 
-
-	bool DEP::isPosValid(const Eigen::Vector3d& p, double safeDist){
-		for (double x=p(0)-safeDist; x<=p(0)+safeDist; x+=this->map_->getRes()){
-			for (double y=p(1)-safeDist; y<=p(1)+safeDist; y+=this->map_->getRes()){
-				for (double z=p(2)-safeDist; z<=p(2)+safeDist; z+=this->map_->getRes()){
-					if (not this->map_->isInflatedFree(Eigen::Vector3d (x, y, z))){
-						return false;
-					}
-				}
-			}
-		}
-		return true;		
-	}
-
-	std::shared_ptr<PRM::Node> DEP::randomConfigBBox(const Eigen::Vector3d& minRegion, const Eigen::Vector3d& maxRegion){
-		Eigen::Vector3d mapMinRegion, mapMaxRegion, minSampleRegion, maxSampleRegion;
-		this->map_->getCurrMapRange(mapMinRegion, mapMaxRegion);
-		// cout << "current map range is: " << mapMinRegion.transpose() << ", " << mapMaxRegion.transpose() << endl;
-		minSampleRegion(0) = std::max(mapMinRegion(0), minRegion(0));
-		minSampleRegion(1) = std::max(mapMinRegion(1), minRegion(1));
-		minSampleRegion(2) = std::max(mapMinRegion(2), minRegion(2));
-		maxSampleRegion(0) = std::min(mapMaxRegion(0), maxRegion(0));
-		maxSampleRegion(1) = std::min(mapMaxRegion(1), maxRegion(1));
-		maxSampleRegion(2) = std::min(mapMaxRegion(2), maxRegion(2));
-
-		minSampleRegion(0) = std::max(minSampleRegion(0), this->globalRegionMin_(0));
-		minSampleRegion(1) = std::max(minSampleRegion(1), this->globalRegionMin_(1));
-		minSampleRegion(2) = std::max(minSampleRegion(2), this->globalRegionMin_(2));
-		maxSampleRegion(0) = std::min(maxSampleRegion(0), this->globalRegionMax_(0));
-		maxSampleRegion(1) = std::min(maxSampleRegion(1), this->globalRegionMax_(1));
-		maxSampleRegion(2) = std::min(maxSampleRegion(2), this->globalRegionMax_(2));
-
-
-		bool valid = false;
-		double safeDist = 0.3;
-		Eigen::Vector3d p;
-		while (valid == false){	
-			p(0) = globalPlanner::randomNumber(minSampleRegion(0), maxSampleRegion(0));
-			p(1) = globalPlanner::randomNumber(minSampleRegion(1), maxSampleRegion(1));
-			p(2) = globalPlanner::randomNumber(minSampleRegion(2), maxSampleRegion(2));
-
-			valid = this->isPosValid(p, safeDist);
-
-			// valid = this->map_->isInflatedFree(p);
-		}
-
-		std::shared_ptr<PRM::Node> newNode (new PRM::Node(p));
-		return newNode;
-	}
-
-	int DEP::calculateUnknown(const shared_ptr<PRM::Node>& n, std::unordered_map<double, int>& yawNumVoxels){
-		for (double yaw : this->yaws_){
-			yawNumVoxels[yaw] = 0;
-		}
-		// Position:
-		Eigen::Vector3d p = n->pos;
-
-		double zRange = this->dmax_ * tan(this->verticalFOV_/2.0);
-		int countTotalUnknown = 0;
-		for (double z = p(2) - zRange; z <= p(2) + zRange; z += this->map_->getRes()){
-			for (double y = p(1) - this->dmax_; y <= p(1)+ this->dmax_; y += this->map_->getRes()){
-				for (double x = p(0) - this->dmax_; x <= p(0) + this->dmax_; x += this->map_->getRes()){
-					Eigen::Vector3d nodePoint (x, y, z);
-					if (nodePoint(0) < this->globalRegionMin_(0) or nodePoint(0) > this->globalRegionMax_(0) or
-						nodePoint(1) < this->globalRegionMin_(1) or nodePoint(1) > this->globalRegionMax_(1) or
-						nodePoint(2) < this->globalRegionMin_(2) or nodePoint(2) > this->globalRegionMax_(2)){
-						// not in global range
-						continue;
-					}
-
-					if (this->map_->isUnknown(nodePoint) and not this->map_->isInflatedOccupied(nodePoint)){
-						if (this->sensorFOVCondition(nodePoint, p)){
-							++countTotalUnknown;
-							for (double yaw: this->yaws_){
-								Eigen::Vector3d yawDirection (cos(yaw), sin(yaw), 0);
-								Eigen::Vector3d direction = nodePoint - p;
-								Eigen::Vector3d face (direction(0), direction(1), 0);
-								double angleToYaw = angleBetweenVectors(face, yawDirection);
-								if (angleToYaw <= this->horizontalFOV_/2){
-									yawNumVoxels[yaw] += 1;
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-		return countTotalUnknown;
-	}
-	double DEP::calculatePathLength(const std::vector<shared_ptr<PRM::Node>>& path){
-		int idx1 = 0;
-		double length = 0;
-		for (size_t idx2=1; idx2<=path.size()-1; ++idx2){
-			length += (path[idx2]->pos - path[idx1]->pos).norm();
-			++idx1;
-		}
-		return length;
-	}
-
-	void DEP::shortcutPath(const std::vector<std::shared_ptr<PRM::Node>>& path, std::vector<std::shared_ptr<PRM::Node>>& pathSc){
-		size_t ptr1 = 0; size_t ptr2 = 2;
-		pathSc.push_back(path[ptr1]);
-
-		if (path.size() == 1){
-			return;
-		}
-
-		if (path.size() == 2){
-			pathSc.push_back(path[1]);
-			return;
-		}
-
-		while (ros::ok()){
-			if (ptr2 > path.size()-1){
-				break;
-			}
-			std::shared_ptr<PRM::Node> p1 = path[ptr1];
-			std::shared_ptr<PRM::Node> p2 = path[ptr2];
-			Eigen::Vector3d pos1 = p1->pos;
-			Eigen::Vector3d pos2 = p2->pos;
-			bool lineValidCheck;
-			// lineValidCheck = not this->map_->isInflatedOccupiedLine(pos1, pos2);
-			lineValidCheck = this->map_->isInflatedFreeLine(pos1, pos2);
-			// double maxDistance = std::numeric_limits<double>::max();
-			// double maxDistance = 3.0;
-			// if (lineValidCheck and (pos1 - pos2).norm() <= maxDistance){
-			if (lineValidCheck){
-				if (ptr2 == path.size()-1){
-					pathSc.push_back(p2);
-					break;
-				}
-				++ptr2;
-			}
-			else{
-				pathSc.push_back(path[ptr2-1]);
-				if (ptr2 == path.size()-1){
-					pathSc.push_back(p2);
-					break;
-				}
-				ptr1 = ptr2-1;
-				ptr2 = ptr1+2;
-			}
-		}		
-	}
-
-	int DEP::weightedSample(const std::vector<double>& weights){
-		double total = std::accumulate(weights.begin(), weights.end(), 0.0);
-		std::vector<double> normalizedWeights;
-
-		 for (const double weight : weights){
-		 	normalizedWeights.push_back(weight/total);
-		 }
-
-		std::random_device rd;
-		std::mt19937 gen(rd());
-		std::discrete_distribution<int> distribution(normalizedWeights.begin(), normalizedWeights.end());
-		return distribution(gen);
-	}
 }

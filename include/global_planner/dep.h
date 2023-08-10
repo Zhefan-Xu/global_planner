@@ -88,17 +88,13 @@ namespace globalPlanner{
 		void getBestViewCandidates(std::vector<std::shared_ptr<PRM::Node>>& goalCandidates);
 		bool findCandidatePath(const std::vector<std::shared_ptr<PRM::Node>>& goalCandidates,  std::vector<std::vector<std::shared_ptr<PRM::Node>>>& candidatePaths);
 		void findBestPath(const std::vector<std::vector<std::shared_ptr<PRM::Node>>>& candidatePaths, std::vector<std::shared_ptr<PRM::Node>>& bestPath);
-		std::shared_ptr<PRM::Node> sampleFrontierPoint(const std::vector<double>& sampleWeights);
+		
 
 		// callback functions
 		void odomCB(const nav_msgs::OdometryConstPtr& odom);
 		void visCB(const ros::TimerEvent&);
 
-		// visualization functions
-		void publishRoadmap();
-		void publishCandidatePaths();
-		void publishBestPath();
-		void publishFrontier();
+
 
 		// help function
 		bool isPosValid(const Eigen::Vector3d& p, double safeDist);
@@ -109,6 +105,14 @@ namespace globalPlanner{
 		double calculatePathLength(const std::vector<shared_ptr<PRM::Node>>& path);
 		void shortcutPath(const std::vector<std::shared_ptr<PRM::Node>>& path, std::vector<std::shared_ptr<PRM::Node>>& pathSc);
 		int weightedSample(const std::vector<double>& weights);
+		std::shared_ptr<PRM::Node> sampleFrontierPoint(const std::vector<double>& sampleWeights);
+		std::shared_ptr<PRM::Node> extendNode(const std::shared_ptr<PRM::Node>& n, const std::shared_ptr<PRM::Node>& target);
+
+		// visualization functions
+		void publishRoadmap();
+		void publishCandidatePaths();
+		void publishBestPath();
+		void publishFrontier();
 	};
 }
 
