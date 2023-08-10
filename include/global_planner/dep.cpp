@@ -378,24 +378,24 @@ namespace globalPlanner{
 		int col = 0;
 		int row = 0;
 		for (double h=this->globalRegionMin_(2); h<=this->globalRegionMax_(2); h+=heightRes){
-			col = 0;
+			row = 0;
 			cv::Mat im (numRow, numCol, CV_8UC1);
 			for (double y=mapMin(1); y<=mapMax(1); y+=this->map_->getRes()){
-				row = 0;
+				col = 0;
 				for (double x=mapMin(0); x<=mapMax(0); x+=this->map_->getRes()){
 					Eigen::Vector3d p (x, y, h);
 					if (this->map_->isInflatedOccupied(p)){
-						im.at<uchar>(col, row) = 0;
+						im.at<uchar>(row, col) = 0;
 					}
 					else if (this->map_->isInflatedFree(p)){
-						im.at<uchar>(col, row) = 255/2;
+						im.at<uchar>(row, col) = 255/2;
 					}
 					else{
-						im.at<uchar>(col, row) = 255;
+						im.at<uchar>(row, col) = 255;
 					}
-					++row;
+					++col;
 				}
-				++col;
+				++row;
 			}
 			cout << "col: " << col << " row: " << row << endl;
 			imgVec.push_back(im);
