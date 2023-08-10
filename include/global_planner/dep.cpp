@@ -380,9 +380,9 @@ namespace globalPlanner{
 		for (double h=this->globalRegionMin_(2); h<=this->globalRegionMax_(2); h+=heightRes){
 			row = 0;
 			cv::Mat im (numRow, numCol, CV_8UC1);
-			for (double y=mapMin(1); y<=mapMax(1); y+=this->map_->getRes()){
+			for (double y=mapMin(1); y<=mapMax(1) and row < numRow; y+=this->map_->getRes()){
 				col = 0;
-				for (double x=mapMin(0); x<=mapMax(0); x+=this->map_->getRes()){
+				for (double x=mapMin(0); x<=mapMax(0) and col < numCol; x+=this->map_->getRes()){
 					Eigen::Vector3d p (x, y, h);
 					if (this->map_->isInflatedOccupied(p)){
 						im.at<uchar>(row, col) = 0;
@@ -428,12 +428,43 @@ namespace globalPlanner{
 	}
 
 	void DEP::buildRoadMap(){
-		std::vector<std::shared_ptr<PRM::Node>> path;
 		bool saturate = false;
 		bool regionSaturate = false;
 		int countSample = 0;
 		std::shared_ptr<PRM::Node> n;
 		std::vector<std::shared_ptr<PRM::Node>> newNodes;
+
+		// while does reach sampling threshold (fail time) 
+		// 1. sample point from frontier region by weighted sampling
+		// 2. find several nearest node
+		// 3. for each node, extend random [mindist, maxdist] distance. if success, add new sample 
+		std::vector<double> sampleWeights;
+		for (int i=0; i<int(this->frontierPointPairs_.size()); ++i){
+			double size = this->frontierPointPairs_[i].second;
+			sampleWeights.push_back(pow(size, 2));
+		}
+		int frontierSampleThresh = 50;
+		int countFrontierFailure = 0;
+		int frontierNeighborNum = 10;
+		while (ros::ok() and countFrontierFailure < frontierSampleThresh and sampleWeights.size() != 0){
+			std::shared_ptr<PRM::Node> fn = this->sampleFrontierPoint(sampleWeights);
+			// a. find N nearest neighbors
+			std::vector<std::shared_ptr<PRM::Node>> fnNeighbors = this->roadmap_->kNearestNeighbor(fn, frontierNeighborNum);
+
+			// b. 
+
+			// if (n == NULL){
+			// 	++countFrontierFailure;
+			// }
+			// else{
+			// 	this->roadmap_->insert(n);
+			// 	newNodes.push_back(n);
+			// 	this->prmNodeVec_.push_back(n);
+			// 	++countSample;
+			// }
+		}
+
+
 		while (ros::ok() and not saturate){
 			if (regionSaturate){
 				int countFailureGlobal = 0;
@@ -500,6 +531,8 @@ namespace globalPlanner{
 				}
 			}
 		}
+
+
 		
 		// node connection
 		for (std::shared_ptr<PRM::Node>& n : newNodes){
@@ -672,6 +705,27 @@ namespace globalPlanner{
 				bestPath = path;
 			}
 		}
+	}
+
+	std::shared_ptr<PRM::Node> DEP::sampleFrontierPoint(const std::vector<double>& sampleWeights){
+		// choose the frontier region (random sample by frontier area) 
+		int idx = weightedSample(sampleWeights);
+
+		// sample a frontier point in the region
+		Eigen::Vector3d frontierCenter = this->frontierPointPairs_[idx].first;
+		double frontierSize = this->frontierPointPairs_[idx].second;
+		double xmin = std::max(frontierCenter(0) - frontierSize/sqrt(2), this->globalRegionMin_(0));
+		double xmax = std::min(frontierCenter(0) + frontierSize/sqrt(2), this->globalRegionMax_(0));
+		double ymin = std::max(frontierCenter(1) - frontierSize/sqrt(2), this->globalRegionMin_(1));
+		double ymax = std::min(frontierCenter(1) + frontierSize/sqrt(2), this->globalRegionMax_(1));
+		double zmin = frontierCenter(2);
+		double zmax = frontierCenter(2);
+		Eigen::Vector3d frontierPoint;
+		frontierPoint(0) = globalPlanner::randomNumber(xmin, xmax);
+		frontierPoint(1) = globalPlanner::randomNumber(ymin, ymax);
+		frontierPoint(2) = globalPlanner::randomNumber(zmin, zmax);
+		std::shared_ptr<PRM::Node> frontierNode (new PRM::Node(frontierPoint));
+		return frontierNode;
 	}
 
 	void DEP::odomCB(const nav_msgs::OdometryConstPtr& odom){
@@ -1126,4 +1180,17 @@ namespace globalPlanner{
 		}		
 	}
 
+	int DEP::weightedSample(const std::vector<double>& weights){
+		double total = std::accumulate(weights.begin(), weights.end(), 0.0);
+		std::vector<double> normalizedWeights;
+
+		 for (const double weight : weights){
+		 	normalizedWeights.push_back(weight/total);
+		 }
+
+		std::random_device rd;
+		std::mt19937 gen(rd());
+		std::discrete_distribution<int> distribution(normalizedWeights.begin(), normalizedWeights.end());
+		return distribution(gen);
+	}
 }
