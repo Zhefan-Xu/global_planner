@@ -45,12 +45,15 @@ namespace globalPlanner{
 		Eigen::Vector3d localRegionMin_, localRegionMax_;
 		int localSampleThresh_;
 		int globalSampleThresh_;
+		int frontierSampleThresh_;
 		double distThresh_;
+		double safeDist_;
 		double horizontalFOV_;
 		double verticalFOV_;
 		double dmin_;
 		double dmax_;
 		int nnNum_;
+		int nnNumFrontier_;
 		double maxConnectDist_;
 		std::vector<double> yaws_;
 		double minVoxelThresh_;

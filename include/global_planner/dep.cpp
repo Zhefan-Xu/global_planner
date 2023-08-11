@@ -115,6 +115,15 @@ namespace globalPlanner{
 			cout << this->hint_ << ": Global sample Thresh: " << this->globalSampleThresh_ << endl;
 		}
 
+		// Frontier Sample Threshold Value
+		if (not this->nh_.getParam(this->ns_ + "/frontier_sample_thresh", this->frontierSampleThresh_)){
+			this->frontierSampleThresh_ = 50;
+			cout << this->hint_ << ": No frontier sample thresh param. Use default: 50" << endl;
+		}
+		else{
+			cout << this->hint_ << ": Frontier sample Thresh: " << this->frontierSampleThresh_ << endl;
+		}		
+
 		// minimum distance for node sampling
 		if (not this->nh_.getParam(this->ns_ + "/dist_thresh", this->distThresh_)){
 			this->distThresh_ = 0.8;
@@ -122,6 +131,15 @@ namespace globalPlanner{
 		}
 		else{
 			cout << this->hint_ << ": Distance Thresh: " << this->distThresh_ << endl;
+		}
+
+		// safety distance for random sampling
+		if (not this->nh_.getParam(this->ns_ + "/safe_distance", this->safeDist_)){
+			this->safeDist_ = 0.3;
+			cout << this->hint_ << ": No safe distance param. Use default: 0.3" << endl;
+		}
+		else{
+			cout << this->hint_ << ": Safe distance: " << this->safeDist_ << endl;
 		}
 
 		//Camera Parameters	
@@ -161,6 +179,15 @@ namespace globalPlanner{
 		}
 		else{
 			cout << this->hint_ << ": Nearest neighbor number is set to: " << this->nnNum_ << endl;
+		}
+
+		// frontier nearest neighbor number
+		if (not this->nh_.getParam(this->ns_ + "/frontier_nearest_neighbor_number", this->nnNumFrontier_)){
+			this->nnNumFrontier_ = 15;
+			cout << this->hint_ << ": No frontier nearest neighbor param. Use default: 15" << endl;
+		}
+		else{
+			cout << this->hint_ << ": Frontier nearest neighbor number is set to: " << this->nnNumFrontier_ << endl;
 		}
 
 		// node connection max distances
@@ -443,21 +470,18 @@ namespace globalPlanner{
 			double size = this->frontierPointPairs_[i].second;
 			sampleWeights.push_back(pow(size, 2));
 		}
-		int frontierSampleThresh = 50;
 		int countFrontierFailure = 0;
-		int frontierNeighborNum = 10;
-		double safeDist = 0.3;
-		while (ros::ok() and countFrontierFailure < frontierSampleThresh and sampleWeights.size() != 0){
+		while (ros::ok() and countFrontierFailure < this->frontierSampleThresh_ and sampleWeights.size() != 0){
 			std::shared_ptr<PRM::Node> fn = this->sampleFrontierPoint(sampleWeights);
 			// a. find N nearest neighbors
-			std::vector<std::shared_ptr<PRM::Node>> fnNeighbors = this->roadmap_->kNearestNeighbor(fn, frontierNeighborNum);
+			std::vector<std::shared_ptr<PRM::Node>> fnNeighbors = this->roadmap_->kNearestNeighbor(fn, this->nnNumFrontier_);
 
 			// b. for each neighbor extend them and check the validity
 			if (int(fnNeighbors.size()) > 0){
 				int countSampleOnce = 0;
 				for (std::shared_ptr<PRM::Node> fnNN : fnNeighbors){
 					n = this->extendNode(fnNN, fn);
-					if (this->isPosValid(n->pos, safeDist)){
+					if (this->isPosValid(n->pos, this->safeDist_)){
 						std::shared_ptr<PRM::Node> nn = this->roadmap_->nearestNeighbor(n);
 						double distToNN = (n->pos - nn->pos).norm();
 						if (distToNN >= this->distThresh_){
@@ -612,7 +636,6 @@ namespace globalPlanner{
 
 		// select candidates from the priority queue
 		int maxNumVoxel = 0;
-		double safeDist = 0.3;
 		while (ros::ok()){
 			std::shared_ptr<PRM::Node> n = gainPQ.top();
 			
@@ -627,7 +650,7 @@ namespace globalPlanner{
 				break;
 			}
 			if ((n->pos - this->position_).norm() >= 1.0){
-				if (this->isPosValid(n->pos, safeDist)){
+				if (this->isPosValid(n->pos, this->safeDist_)){
 					goalCandidates.push_back(n);
 					// cout << "Valid goal candidate: " << n->pos.transpose() << " voxel: " << n->numVoxels  << endl;
 				}
@@ -653,7 +676,7 @@ namespace globalPlanner{
 			gainPQ.pop();
 			if ((n->pos - this->position_).norm() >= 1.0){ 	
 				// cout << "candidate goal: " << n->pos.transpose() << endl;	
-				if (this->isPosValid(n->pos, safeDist)){
+				if (this->isPosValid(n->pos, this->safeDist_)){
 					goalCandidates.push_back(n);
 					// cout << "Valid goal candidate: " << n->pos.transpose() << " voxel: " << n->numVoxels  << endl;
 				}			
@@ -800,14 +823,13 @@ namespace globalPlanner{
 
 
 		bool valid = false;
-		double safeDist = 0.3;
 		Eigen::Vector3d p;
 		while (valid == false){	
 			p(0) = globalPlanner::randomNumber(minSampleRegion(0), maxSampleRegion(0));
 			p(1) = globalPlanner::randomNumber(minSampleRegion(1), maxSampleRegion(1));
 			p(2) = globalPlanner::randomNumber(minSampleRegion(2), maxSampleRegion(2));
 
-			valid = this->isPosValid(p, safeDist);
+			valid = this->isPosValid(p, this->safeDist_);
 
 			// valid = this->map_->isInflatedFree(p);
 		}

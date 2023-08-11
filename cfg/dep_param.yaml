@@ -5,7 +5,9 @@ global_region_min: [-20, -20, 0]
 global_region_max: [20, 20, 3]
 local_sample_thresh: 50
 global_sample_thresh: 50
+frontier_sample_thresh: 100
 dist_thresh: 0.8
+safe_distance: 0.3
 
 # Camera Parameters
 horizontal_FOV: 1.57
@@ -13,6 +15,9 @@ vertical_FOV: 1.57
 dmin: 0
 dmax: 1.0
 
+nearest_neighbor_number: 15
+frontier_nearest_neighbor_number: 15
+max_connect_dist: 1.5
 num_yaw_angles: 32
 
 # Goal Candidate
