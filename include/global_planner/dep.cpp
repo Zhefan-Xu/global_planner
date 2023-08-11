@@ -398,8 +398,6 @@ namespace globalPlanner{
     	params.minConvexity = 0.1;;
 		cv::Ptr<cv::SimpleBlobDetector> detector = cv::SimpleBlobDetector::create(params);
 		std::vector<cv::Mat> imgVec;
-		cout << "num row: " << numRow << endl;
-		cout << "num col: " << numCol << endl;
 		// find height levels to slice the map
 		double heightRes = 0.3;
 		int col = 0;
@@ -424,7 +422,6 @@ namespace globalPlanner{
 				}
 				++row;
 			}
-			cout << "col: " << col << " row: " << row << endl;
 			imgVec.push_back(im);
 		}
 
