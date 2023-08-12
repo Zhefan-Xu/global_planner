@@ -969,6 +969,9 @@ namespace globalPlanner{
 	std::shared_ptr<PRM::Node> DEP::extendNode(const std::shared_ptr<PRM::Node>& n, const std::shared_ptr<PRM::Node>& target){
 		double extendDist = randomNumber(this->distThresh_, this->maxConnectDist_);
 		Eigen::Vector3d p = n->pos + (target->pos - n->pos)/(target->pos - n->pos).norm() * extendDist;
+		p(0) = std::max(this->globalRegionMin_(0), std::min(p(0), this->globalRegionMax_(0)));
+		p(1) = std::max(this->globalRegionMin_(1), std::min(p(1), this->globalRegionMax_(1)));
+		p(2) = std::max(this->globalRegionMin_(2), std::min(p(2), this->globalRegionMax_(2)));
 		std::shared_ptr<PRM::Node> extendedNode (new PRM::Node(p));
 		return extendedNode;
 	}
