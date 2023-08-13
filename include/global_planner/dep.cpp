@@ -345,7 +345,7 @@ namespace globalPlanner{
 		}
 	}
 
-	// TODO create sensor check for 
+	// create sensor check for 
 	// vert, horz FOV, collision, and sensor distance range
 	// for yaw angles in vector3d:  cos(yaw), sin(yaw), 0
 	// horz angle between yaw angle vector and direction (x y 0) vector for horz FOV
