@@ -723,10 +723,23 @@ namespace globalPlanner{
 				std::shared_ptr<PRM::Node> nextNode = path[i+1];
 				Eigen::Vector3d diff = nextNode->pos - currNode->pos;
 				double angle = atan2(diff(1), diff(0));
+
+				// reevaluate the unknowns for intermediate points
+				std::unordered_map<double, int> yawNumVoxels;
+				int unknownVoxelNum = this->calculateUnknown(currNode, yawNumVoxels);
+				currNode->numVoxels = unknownVoxelNum;
+				currNode->yawNumVoxels = yawNumVoxels;
+
+
 				unknownVoxel += currNode->getUnknownVoxels(angle);
 				yawDist += globalPlanner::angleDiff(prevYaw, angle);
 				prevYaw = angle;
 			}
+			// reevaluate the goal node
+			std::unordered_map<double, int> yawNumVoxels;
+			int unknownVoxelNum = this->calculateUnknown(path.back(), yawNumVoxels);
+			path.back()->numVoxels = unknownVoxelNum;
+			path.back()->yawNumVoxels = yawNumVoxels;
 			unknownVoxel += path.back()->getBestYawVoxel();
 			yawDist += globalPlanner::angleDiff(prevYaw, path.back()->getBestYaw());
 

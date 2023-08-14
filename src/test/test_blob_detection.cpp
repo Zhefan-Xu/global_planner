@@ -27,6 +27,15 @@ int main() {
     // params.filterByInertia = true;
     // params.minInertiaRatio = 0.01;
 
+    // params.filterByColor = true;
+    // params.blobColor = 255;  // Blobs should be white
+    // params.filterByArea = true;
+    // params.minArea = 10;
+    // params.maxArea = 6000;
+    // params.filterByCircularity = false;
+    // params.minCircularity = 1;
+    // params.filterByConvexity = true;
+
     // Create a SimpleBlobDetector
     cv::Ptr<cv::SimpleBlobDetector> detector = cv::SimpleBlobDetector::create(params);
 
@@ -67,6 +76,13 @@ int main() {
         cv::Mat grayImage;
         cv::cvtColor(image, grayImage, cv::COLOR_BGR2GRAY);
 
+        int x = 0;
+        int y = 0;
+        int width = image.size().width;
+        int height = image.size().height;
+        cv::Rect rect(x, y, width, height);
+        cv::rectangle(image, rect, cv::Scalar(0, 0, 0), 3);
+        
 	    // Detect blobs
 	    std::vector<cv::KeyPoint> keypoints;
 	    detector->detect(image, keypoints);
