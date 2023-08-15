@@ -285,6 +285,7 @@ namespace globalPlanner{
 
 		this->buildRoadMap();
 
+		this->pruneNodes();
 
 		this->updateInformationGain();
 
@@ -484,7 +485,8 @@ namespace globalPlanner{
 						if (distToNN >= this->distThresh_){
 							this->roadmap_->insert(n);
 							newNodes.push_back(n);
-							this->prmNodeVec_.push_back(n);
+							// this->prmNodeVec_.push_back(n);
+							this->prmNodeVec_.insert(n);
 							++countSample;	
 							++countSampleOnce;
 						}
@@ -499,7 +501,7 @@ namespace globalPlanner{
 				break;
 			}
 		}
-		cout << "added sample from frontier:  " << countSample << endl;
+		// cout << "added sample from frontier:  " << countSample << endl;
 
 		while (ros::ok() and not saturate){
 			if (regionSaturate){
@@ -526,7 +528,8 @@ namespace globalPlanner{
 					else{
 						this->roadmap_->insert(n);
 						newNodes.push_back(n);
-						this->prmNodeVec_.push_back(n);
+						// this->prmNodeVec_.push_back(n);
+						this->prmNodeVec_.insert(n);
 						++countSample;
 					}
 				}
@@ -560,7 +563,8 @@ namespace globalPlanner{
 						else{
 							this->roadmap_->insert(n);
 							newNodes.push_back(n);
-							this->prmNodeVec_.push_back(n);
+							// this->prmNodeVec_.push_back(n);
+							this->prmNodeVec_.insert(n);
 							++countSample;
 						}
 					}
@@ -587,6 +591,36 @@ namespace globalPlanner{
 			n->newNode = true;
 		}
 	}	 
+
+	void DEP::pruneNodes(){
+		// record the invalid nodes
+		std::unordered_set<std::shared_ptr<PRM::Node>> invalidSet;
+		for (std::shared_ptr<PRM::Node> n : this->prmNodeVec_){ // new nodes
+			if (not this->isPosValid(n->pos, this->safeDist_)){// 1. new nodes
+				invalidSet.insert(n);
+			}	
+		}
+
+		// remove invalid nodes
+		for (std::shared_ptr<PRM::Node> in : invalidSet){
+			this->prmNodeVec_.erase(in);
+		}
+
+
+		//  remove invalid edges
+		for (std::shared_ptr<PRM::Node> n : this->prmNodeVec_){
+			std::vector<std::shared_ptr<PRM::Node>> eraseVec;
+			for (std::shared_ptr<PRM::Node> neighbor : n->adjNodes){
+				if (invalidSet.find(neighbor) != invalidSet.end()){
+					eraseVec.push_back(neighbor);
+				}
+			}
+
+			for (std::shared_ptr<PRM::Node> en : eraseVec){
+				n->adjNodes.erase(en);
+			}
+		}
+	}
 
 	void DEP::updateInformationGain(){
 		// iterate through all current nodes (ignore update by path now)
@@ -627,7 +661,7 @@ namespace globalPlanner{
 		std::priority_queue<std::shared_ptr<PRM::Node>, std::vector<std::shared_ptr<PRM::Node>>, PRM::GainCompareNode> gainPQ;
 
 		// iterate through all points in the roadmap
-		for (std::shared_ptr<PRM::Node>& n : this->prmNodeVec_){
+		for (std::shared_ptr<PRM::Node> n : this->prmNodeVec_){
 			gainPQ.push(n);
 		}
 
@@ -996,8 +1030,8 @@ namespace globalPlanner{
 		int countPointNum = 0;
 		int countEdgeNum = 0;
 		int countVoxelNumText = 0;
-		for (size_t i=0; i<this->prmNodeVec_.size(); ++i){
-			std::shared_ptr<PRM::Node> n = this->prmNodeVec_[i];
+		for (std::shared_ptr<PRM::Node> n : this->prmNodeVec_){
+			// std::shared_ptr<PRM::Node> n = this->prmNodeVec_[i];
 
 			// Node point
 			visualization_msgs::Marker point;

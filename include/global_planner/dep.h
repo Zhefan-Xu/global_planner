@@ -66,7 +66,8 @@ namespace globalPlanner{
 		Eigen::Vector3d position_;
 		double currYaw_;
 		std::deque<Eigen::Vector3d> histTraj_; // historic trajectory for information gain update 
-		std::vector<std::shared_ptr<PRM::Node>> prmNodeVec_; // all nodes		
+		// std::vector<std::shared_ptr<PRM::Node>> prmNodeVec_; // all nodes		
+		std::unordered_set<std::shared_ptr<PRM::Node>> prmNodeVec_; // all nodes
 		std::vector<std::shared_ptr<PRM::Node>> goalCandidates_;
 		std::vector<std::vector<std::shared_ptr<PRM::Node>>> candidatePaths_;
 		std::vector<std::shared_ptr<PRM::Node>> bestPath_;
@@ -87,6 +88,7 @@ namespace globalPlanner{
 		nav_msgs::Path getBestPath();
 		void detectFrontierRegion(std::vector<std::pair<Eigen::Vector3d, double>>& frontierPointPairs);
 		void buildRoadMap();
+		void pruneNodes();
 		void updateInformationGain();
 		void getBestViewCandidates(std::vector<std::shared_ptr<PRM::Node>>& goalCandidates);
 		bool findCandidatePath(const std::vector<std::shared_ptr<PRM::Node>>& goalCandidates,  std::vector<std::vector<std::shared_ptr<PRM::Node>>>& candidatePaths);
