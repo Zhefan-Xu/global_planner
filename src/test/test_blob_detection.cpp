@@ -4,12 +4,6 @@
 
 int main() {
     // Read the input image
-    cv::Mat image = cv::imread("/home/zhefan/Desktop/map/7.jpg", cv::IMREAD_GRAYSCALE);
-
-    if (image.empty()) {
-        std::cerr << "Error: Could not read image." << std::endl;
-        return 1;
-    }
 
     // Create SimpleBlobDetector parameters
     cv::SimpleBlobDetector::Params params;
@@ -35,6 +29,7 @@ int main() {
     params.filterByCircularity = false;
     params.minCircularity = 1;
     params.filterByConvexity = true;
+    params.minConvexity = 0.1;
 
     // Create a SimpleBlobDetector
     cv::Ptr<cv::SimpleBlobDetector> detector = cv::SimpleBlobDetector::create(params);

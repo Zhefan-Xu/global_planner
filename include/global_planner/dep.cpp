@@ -402,10 +402,21 @@ namespace globalPlanner{
 		int numCol = (mapMax(0) - mapMin(0))/this->map_->getRes() + 1;
 
 		cv::SimpleBlobDetector::Params params;
+		// params.filterByColor = true;
+		// params.blobColor = 255;
+		// params.filterByConvexity = true;
+  //   	params.minConvexity = 0.1;;
+
 		params.filterByColor = true;
-		params.blobColor = 255;
+		params.blobColor = 255;  // Blobs should be white
+		params.filterByArea = true;
+		params.minArea = pow(1/this->map_->getRes(), 2);
+		params.maxArea = numRow * numCol;
+		params.filterByCircularity = false;
+		params.minCircularity = 1;
 		params.filterByConvexity = true;
-    	params.minConvexity = 0.1;;
+		params.minConvexity = 0.1;
+
 		cv::Ptr<cv::SimpleBlobDetector> detector = cv::SimpleBlobDetector::create(params);
 		std::vector<cv::Mat> imgVec;
 		// find height levels to slice the map
