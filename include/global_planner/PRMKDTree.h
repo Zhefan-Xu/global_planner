@@ -117,6 +117,8 @@ namespace PRM{
 		std::shared_ptr<Node> root_;
 		double leastDistNN_ = std::numeric_limits<double>::infinity(); // temporarily save minimum distance for nearest neighbor search
 		std::vector<std::shared_ptr<Node>> notTarget_;
+		std::unordered_set<std::shared_ptr<Node>> notTargetTemp_;
+		std::unordered_set<std::shared_ptr<Node>> notTargetPerm_;
 
 	public:
 		KDTree();
@@ -129,6 +131,7 @@ namespace PRM{
 			                                  std::shared_ptr<Node> bestNode=NULL,
 			                                  int depth=0);
 		std::vector<std::shared_ptr<Node>> kNearestNeighbor(std::shared_ptr<Node> n, int num);
+		void remove(std::shared_ptr<Node> n);
 	};
 }
 

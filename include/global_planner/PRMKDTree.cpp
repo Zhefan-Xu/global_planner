@@ -87,11 +87,20 @@ namespace PRM{
 				currDist = std::numeric_limits<double>::infinity();
 			}
 			// avoid finding node in this list
-			for (std::shared_ptr<Node> nt: this->notTarget_){
-				if (ptr == nt){
-					currDist = std::numeric_limits<double>::infinity();
-					break;
-				}
+			// for (std::shared_ptr<Node> nt: this->notTarget_){
+			// 	if (ptr == nt){
+			// 		currDist = std::numeric_limits<double>::infinity();
+			// 		break;
+			// 	}
+			// }
+
+			// avoid target here
+			if (this->notTargetTemp_.find(ptr) != this->notTargetTemp_.end()){
+				currDist = std::numeric_limits<double>::infinity();
+			}
+
+			if (this->notTargetPerm_.find(ptr) != this->notTargetPerm_.end()){
+				currDist = std::numeric_limits<double>::infinity();
 			}
 
 			if (currDist < this->leastDistNN_){
@@ -158,10 +167,15 @@ namespace PRM{
 				cout << "find null pointer at " << i << endl;
 			}
 			knn.push_back(nearestNeighborNode);
-			this->notTarget_.push_back(nearestNeighborNode);
+			// this->notTarget_.push_back(nearestNeighborNode);
+			this->notTargetTemp_.insert(nearestNeighborNode);
 		}
-		this->notTarget_.clear();
+		// this->notTarget_.clear();
+		this->notTargetTemp_.clear();
 		return knn;
 	}
 
+	void KDTree::remove(std::shared_ptr<Node> n){
+		this->notTargetPerm_.insert(n);
+	}
 }

@@ -249,6 +249,15 @@ namespace globalPlanner{
 		else{
 			cout << this->hint_ << ": Information gain update distance is set to: " << this->updateDist_ << endl;
 		}
+
+		// yaw penalty weight
+		if (not this->nh_.getParam(this->ns_ + "/yaw_penalty_weight", this->yawPenaltyWeight_)){
+			this->yawPenaltyWeight_ = 1.0;
+			cout << this->hint_ << ": No yaw penalty weight param. Use default: 1.0." << endl;
+		}
+		else{
+			cout << this->hint_ << ": Yaw penalty weight is set to: " << this->yawPenaltyWeight_ << endl;
+		}
 	}
 
 	void DEP::initModules(){
@@ -292,18 +301,18 @@ namespace globalPlanner{
 		
 		this->getBestViewCandidates(this->goalCandidates_);
 
-		cout << "finish best view candidate with size: " << this->goalCandidates_.size() << endl;
+		// cout << "finish best view candidate with size: " << this->goalCandidates_.size() << endl;
 
 		bool findCandidatePathSuccess = this->findCandidatePath(this->goalCandidates_, this->candidatePaths_);
 
-		cout << "finish candidate path with size: " << this->candidatePaths_.size() << endl;
+		// cout << "finish candidate path with size: " << this->candidatePaths_.size() << endl;
 		if (not findCandidatePathSuccess){
-			cout << "Find candidate paths fails. need generate more samples." << endl;
+			// cout << "Find candidate paths fails. need generate more samples." << endl;
 			return false;
 		}
 
 		this->findBestPath(this->candidatePaths_, this->bestPath_);
-		cout << "found best path with size: " << this->bestPath_.size() << endl;
+		// cout << "found best path with size: " << this->bestPath_.size() << endl;
 		return true;
 	}
 
@@ -604,6 +613,7 @@ namespace globalPlanner{
 		// remove invalid nodes
 		for (std::shared_ptr<PRM::Node> in : invalidSet){
 			this->prmNodeVec_.erase(in);
+			this->roadmap_->remove(in);
 		}
 
 
@@ -779,7 +789,7 @@ namespace globalPlanner{
 
 			double distance = this->calculatePathLength(path);
 			// cout << "total is distance is: " << distance << " total yaw distance is: " << yawDist << " voxel: " << path.back()->numVoxels << endl;
-			double pathTime = distance/this->vel_ + yawDist/this->angularVel_;
+			double pathTime = distance/this->vel_ + this->yawPenaltyWeight_ * yawDist/this->angularVel_;
 			double score = double(unknownVoxel)/pathTime; 
 			// cout << "unknown for path: " << n <<  " is: " << unknownVoxel << " score: " << score << " distance: " << distance << " Time: " << pathTime <<  " Last total unknown: " << path.back()->numVoxels << " last best: " << path.back()->getBestYawVoxel() << endl;
 			if (score > highestScore){

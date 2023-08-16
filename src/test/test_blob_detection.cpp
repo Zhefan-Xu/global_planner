@@ -13,28 +13,28 @@ int main() {
 
     // Create SimpleBlobDetector parameters
     cv::SimpleBlobDetector::Params params;
-    // params.minThreshold = 0;
-    // params.maxThreshold = 255;
-    params.filterByColor = true;
-    params.blobColor = 255;  // Blobs should be white
-    // params.filterByArea = true;
-    // params.minArea = 50;
-    // params.maxArea = 16000;
-    // params.filterByCircularity = true;
-    // params.minCircularity = 0.0;
-    params.filterByConvexity = true;
-    params.minConvexity = 0.1;
-    // params.filterByInertia = true;
-    // params.minInertiaRatio = 0.01;
-
+    // // params.minThreshold = 0;
+    // // params.maxThreshold = 255;
     // params.filterByColor = true;
     // params.blobColor = 255;  // Blobs should be white
-    // params.filterByArea = true;
-    // params.minArea = 10;
-    // params.maxArea = 6000;
-    // params.filterByCircularity = false;
-    // params.minCircularity = 1;
+    // // params.filterByArea = true;
+    // // params.minArea = 50;
+    // // params.maxArea = 16000;
+    // // params.filterByCircularity = true;
+    // // params.minCircularity = 0.0;
     // params.filterByConvexity = true;
+    // params.minConvexity = 0.1;
+    // // params.filterByInertia = true;
+    // // params.minInertiaRatio = 0.01;
+
+    params.filterByColor = true;
+    params.blobColor = 255;  // Blobs should be white
+    params.filterByArea = true;
+    params.minArea = 10;
+    params.maxArea = 6000;
+    params.filterByCircularity = false;
+    params.minCircularity = 1;
+    params.filterByConvexity = true;
 
     // Create a SimpleBlobDetector
     cv::Ptr<cv::SimpleBlobDetector> detector = cv::SimpleBlobDetector::create(params);

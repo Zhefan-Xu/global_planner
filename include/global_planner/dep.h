@@ -60,6 +60,7 @@ namespace globalPlanner{
 		int minCandidateNum_;
 		int maxCandidateNum_;
 		double updateDist_;
+		double yawPenaltyWeight_;
 
 		// data
 		bool odomReceived_ = false;
