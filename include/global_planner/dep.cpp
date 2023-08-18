@@ -453,6 +453,9 @@ namespace globalPlanner{
 		double height = this->globalRegionMin_(2);
 		for (cv::Mat img : imgVec){
 			std::vector<cv::KeyPoint> keypoints;
+
+			cv::Rect rect(0, 0, numRow, numCol);
+			cv::rectangle(img, rect, cv::Scalar(0, 0, 0), 3);
 			detector->detect(img, keypoints);
 
 			// convert keypoints back to the map coordinate
@@ -693,7 +696,8 @@ namespace globalPlanner{
 			std::shared_ptr<PRM::Node> n = gainPQ.top();
 			
 			if (firstNode){
-				if ((n->pos - this->position_).norm() >= 1.0){
+				// if ((n->pos - this->position_).norm() >= 1.0){
+				if ((n->pos - this->position_).norm() >= 0.0){
 					maxNumVoxel = n->numVoxels;
 					firstNode = false;
 				}
@@ -702,7 +706,8 @@ namespace globalPlanner{
 			if (double(n->numVoxels) < double(maxNumVoxel) * this->minVoxelThresh_){
 				break;
 			}
-			if ((n->pos - this->position_).norm() >= 1.0){
+			// if ((n->pos - this->position_).norm() >= 1.0){
+			if ((n->pos - this->position_).norm() >= 0.0){			
 				if (this->isPosValid(n->pos, this->safeDist_)){
 					goalCandidates.push_back(n);
 					// cout << "Valid goal candidate: " << n->pos.transpose() << " voxel: " << n->numVoxels  << endl;
@@ -727,7 +732,8 @@ namespace globalPlanner{
 
 			std::shared_ptr<PRM::Node> n = gainPQ.top();
 			gainPQ.pop();
-			if ((n->pos - this->position_).norm() >= 1.0){ 	
+			// if ((n->pos - this->position_).norm() >= 1.0){ 
+			if ((n->pos - this->position_).norm() >= 0.0){	
 				// cout << "candidate goal: " << n->pos.transpose() << endl;	
 				if (this->isPosValid(n->pos, this->safeDist_)){
 					goalCandidates.push_back(n);
