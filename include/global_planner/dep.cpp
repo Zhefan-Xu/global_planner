@@ -434,7 +434,8 @@ namespace globalPlanner{
 						im.at<uchar>(row, col) = 0;
 					}
 					else if (this->map_->isInflatedFree(p)){
-						im.at<uchar>(row, col) = 255/2;
+						// im.at<uchar>(row, col) = 255/2;
+						im.at<uchar>(row, col) = 0;
 					}
 					else{
 						im.at<uchar>(row, col) = 255;
