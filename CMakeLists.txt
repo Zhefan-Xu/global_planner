@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
   octomap_ros
   map_manager
 )
+find_package(OpenCV REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -165,9 +166,9 @@ add_executable(dep_node src/dep_node.cpp)
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
 # )
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${OpenCV_LIBS})
 target_link_libraries(test_kdtree ${catkin_LIBRARIES})
-target_link_libraries(test_prm_kdtree ${catkin_LIBRARIES} ${PROJECT_NAME})
+target_link_libraries(test_prm_kdtree ${catkin_LIBRARIES} ${PROJECT_NAME} ${OpenCV_LIBS})
 target_link_libraries(test_blob_detection ${catkin_LIBRARIES})
 target_link_libraries(rrtInteractiveNode ${catkin_LIBRARIES})
 target_link_libraries(rrtStarInteractiveNode ${catkin_LIBRARIES})
