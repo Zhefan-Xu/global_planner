@@ -267,16 +267,16 @@ namespace globalPlanner{
 
 	void DEP::registerPub(){
 		// roadmap visualization publisher
-		this->roadmapPub_ = this->nh_.advertise<visualization_msgs::MarkerArray>("/dep/roadmap", 1000);
+		this->roadmapPub_ = this->nh_.advertise<visualization_msgs::MarkerArray>("/dep/roadmap", 10);
 
 		// candidate paths publisher
-		this->candidatePathPub_ = this->nh_.advertise<visualization_msgs::MarkerArray>("/dep/candidate_paths", 1000);
+		this->candidatePathPub_ = this->nh_.advertise<visualization_msgs::MarkerArray>("/dep/candidate_paths", 10);
 
 		// best path publisher
-		this->bestPathPub_ = this->nh_.advertise<visualization_msgs::MarkerArray>("/dep/best_paths", 1000);
+		this->bestPathPub_ = this->nh_.advertise<visualization_msgs::MarkerArray>("/dep/best_paths", 10);
 
 		// fronteir vis publisher
-		this->frontierVisPub_ = this->nh_.advertise<visualization_msgs::MarkerArray>("/dep/frontier_regions", 1000);
+		this->frontierVisPub_ = this->nh_.advertise<visualization_msgs::MarkerArray>("/dep/frontier_regions", 10);
 	}
 
 	void DEP::registerCallback(){
@@ -290,15 +290,19 @@ namespace globalPlanner{
 
 	bool DEP::makePlan(){
 		if (not this->odomReceived_) return false;
+		// cout << "start detecting frontier" << endl;
 		this->detectFrontierRegion(this->frontierPointPairs_);
 
+		// cout << "start building roadmap" << endl;
 		this->buildRoadMap();
 
+		// cout << "start pruning nodes" << endl;
 		this->pruneNodes();
 
+		// cout << "start update information gain" << endl;
 		this->updateInformationGain();
 
-		
+		// cout << "start get goal candidates" << endl;
 		this->getBestViewCandidates(this->goalCandidates_);
 
 		// cout << "finish best view candidate with size: " << this->goalCandidates_.size() << endl;
@@ -693,11 +697,16 @@ namespace globalPlanner{
 		// select candidates from the priority queue
 		int maxNumVoxel = 0;
 		while (ros::ok()){
+			if (gainPQ.size() == 0){
+				break;
+			}
+
+
 			std::shared_ptr<PRM::Node> n = gainPQ.top();
 			
 			if (firstNode){
-				// if ((n->pos - this->position_).norm() >= 1.0){
-				if ((n->pos - this->position_).norm() >= 0.0){
+				if ((n->pos - this->position_).norm() >= 1.0){
+				// if ((n->pos - this->position_).norm() >= 0.0){
 					maxNumVoxel = n->numVoxels;
 					firstNode = false;
 				}
@@ -706,8 +715,8 @@ namespace globalPlanner{
 			if (double(n->numVoxels) < double(maxNumVoxel) * this->minVoxelThresh_){
 				break;
 			}
-			// if ((n->pos - this->position_).norm() >= 1.0){
-			if ((n->pos - this->position_).norm() >= 0.0){			
+			if ((n->pos - this->position_).norm() >= 1.0){
+			// if ((n->pos - this->position_).norm() >= 0.0){			
 				if (this->isPosValid(n->pos, this->safeDist_)){
 					goalCandidates.push_back(n);
 					// cout << "Valid goal candidate: " << n->pos.transpose() << " voxel: " << n->numVoxels  << endl;
@@ -732,8 +741,8 @@ namespace globalPlanner{
 
 			std::shared_ptr<PRM::Node> n = gainPQ.top();
 			gainPQ.pop();
-			// if ((n->pos - this->position_).norm() >= 1.0){ 
-			if ((n->pos - this->position_).norm() >= 0.0){	
+			if ((n->pos - this->position_).norm() >= 1.0){ 
+			// if ((n->pos - this->position_).norm() >= 0.0){	
 				// cout << "candidate goal: " << n->pos.transpose() << endl;	
 				if (this->isPosValid(n->pos, this->safeDist_)){
 					goalCandidates.push_back(n);
@@ -750,7 +759,6 @@ namespace globalPlanner{
 		currPos.reset(new PRM::Node (this->position_));
 		std::shared_ptr<PRM::Node> start = this->roadmap_->nearestNeighbor(currPos);
 
-
 		candidatePaths.clear();
 		for (std::shared_ptr<PRM::Node> goal : goalCandidates){
 			std::vector<std::shared_ptr<PRM::Node>> path = PRM::AStar(this->roadmap_, start, goal, this->map_);
@@ -765,18 +773,16 @@ namespace globalPlanner{
 			this->shortcutPath(path, pathSc);
 			candidatePaths.push_back(pathSc);
 		}
-
 		return findPath;
 	}
 
 	void DEP::findBestPath(const std::vector<std::vector<std::shared_ptr<PRM::Node>>>& candidatePaths, std::vector<std::shared_ptr<PRM::Node>>& bestPath){
 		// find path highest unknown
 		bestPath.clear();
-		double highestScore = std::numeric_limits<double>::min();
+		double highestScore = -1;
 		for (int n=0; n<int(candidatePaths.size()); ++n){
 			std::vector<std::shared_ptr<PRM::Node>> path = candidatePaths[n]; 
 			if (int(path.size()) == 0) continue;
-
 			double yawDist = 0;
 			double prevYaw = this->currYaw_;
 			int unknownVoxel = 0;
@@ -814,6 +820,9 @@ namespace globalPlanner{
 				highestScore = score;
 				bestPath = path;
 			}
+		}
+		if (highestScore == 0){
+			cout << "[DEP]: Current score is 0. The exploration might complete." << endl;
 		}
 	}
 

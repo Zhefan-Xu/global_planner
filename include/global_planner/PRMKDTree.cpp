@@ -164,6 +164,12 @@ namespace PRM{
 		for (int i=0; i<num; ++i){
 			std::shared_ptr<Node> nearestNeighborNode = nearestNeighbor(n);
 			if (nearestNeighborNode == NULL){
+				if (n != NULL){
+					cout << "invalid node: " << n->pos << endl;
+				}
+				else{
+					cout << "NULL node." << endl;
+				}
 				cout << "find null pointer at " << i << endl;
 			}
 			knn.push_back(nearestNeighborNode);
@@ -177,5 +183,6 @@ namespace PRM{
 
 	void KDTree::remove(std::shared_ptr<Node> n){
 		this->notTargetPerm_.insert(n);
+		--this->size_;
 	}
 }
