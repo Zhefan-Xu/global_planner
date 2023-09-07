@@ -439,9 +439,11 @@ namespace globalPlanner{
 					}
 					else if (this->map_->isInflatedFree(p)){
 						// im.at<uchar>(row, col) = 255/2;
+						// im.at<uchar>(row, col) = 255;
 						im.at<uchar>(row, col) = 0;
 					}
 					else{
+						// im.at<uchar>(row, col) = 255/2;
 						im.at<uchar>(row, col) = 255;
 					}
 					++col;
@@ -625,6 +627,7 @@ namespace globalPlanner{
 		std::unordered_set<std::shared_ptr<PRM::Node>> invalidSet;
 		for (std::shared_ptr<PRM::Node> n : this->prmNodeVec_){ // new nodes
 			if (not this->isPosValid(n->pos, this->safeDist_)){// 1. new nodes
+			// if (this->map_->isInflatedOccupied(n->pos)){// 1. new nodes
 				invalidSet.insert(n);
 			}	
 		}
@@ -705,8 +708,8 @@ namespace globalPlanner{
 			std::shared_ptr<PRM::Node> n = gainPQ.top();
 			
 			if (firstNode){
-				if ((n->pos - this->position_).norm() >= 1.0){
-				// if ((n->pos - this->position_).norm() >= 0.0){
+				// if ((n->pos - this->position_).norm() >= 1.0){
+				if ((n->pos - this->position_).norm() >= 0.0){
 					maxNumVoxel = n->numVoxels;
 					firstNode = false;
 				}
@@ -715,8 +718,8 @@ namespace globalPlanner{
 			if (double(n->numVoxels) < double(maxNumVoxel) * this->minVoxelThresh_){
 				break;
 			}
-			if ((n->pos - this->position_).norm() >= 1.0){
-			// if ((n->pos - this->position_).norm() >= 0.0){			
+			// if ((n->pos - this->position_).norm() >= 1.0){
+			if ((n->pos - this->position_).norm() >= 0.0){			
 				if (this->isPosValid(n->pos, this->safeDist_)){
 					goalCandidates.push_back(n);
 					// cout << "Valid goal candidate: " << n->pos.transpose() << " voxel: " << n->numVoxels  << endl;
@@ -741,8 +744,8 @@ namespace globalPlanner{
 
 			std::shared_ptr<PRM::Node> n = gainPQ.top();
 			gainPQ.pop();
-			if ((n->pos - this->position_).norm() >= 1.0){ 
-			// if ((n->pos - this->position_).norm() >= 0.0){	
+			// if ((n->pos - this->position_).norm() >= 1.0){ 
+			if ((n->pos - this->position_).norm() >= 0.0){	
 				// cout << "candidate goal: " << n->pos.transpose() << endl;	
 				if (this->isPosValid(n->pos, this->safeDist_)){
 					goalCandidates.push_back(n);
