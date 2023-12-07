@@ -152,7 +152,7 @@ namespace globalPlanner{
 		}
 
 		// safety distance check unknown
-		if (not this->nh_.getParam(this->ns_ + "/safe_distance_check_unkonwn", this->safeDistCheckUnknown_)){
+		if (not this->nh_.getParam(this->ns_ + "/safe_distance_check_unknown", this->safeDistCheckUnknown_)){
 			this->safeDistCheckUnknown_ = true;
 			cout << this->hint_ << ": No safe distance check unknown param. Use default: true" << endl;
 		}
