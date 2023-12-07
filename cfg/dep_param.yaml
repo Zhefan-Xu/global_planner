@@ -7,7 +7,9 @@ local_sample_thresh: 50
 global_sample_thresh: 50
 frontier_sample_thresh: 100
 dist_thresh: 0.8
-safe_distance: 0.3
+safe_distance_xy: 0.3
+safe_distance_z: 0.0
+safe_distance_check_unkonwn: true # true will make node sampling conservative but safe 
 
 # Camera Parameters
 horizontal_FOV: 1.57

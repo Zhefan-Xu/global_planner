@@ -133,13 +133,31 @@ namespace globalPlanner{
 			cout << this->hint_ << ": Distance Thresh: " << this->distThresh_ << endl;
 		}
 
-		// safety distance for random sampling
-		if (not this->nh_.getParam(this->ns_ + "/safe_distance", this->safeDist_)){
-			this->safeDist_ = 0.3;
-			cout << this->hint_ << ": No safe distance param. Use default: 0.3" << endl;
+		// safety distance for random sampling in xy
+		if (not this->nh_.getParam(this->ns_ + "/safe_distance_xy", this->safeDistXY_)){
+			this->safeDistXY_ = 0.3;
+			cout << this->hint_ << ": No safe distance in XY param. Use default: 0.3" << endl;
 		}
 		else{
-			cout << this->hint_ << ": Safe distance: " << this->safeDist_ << endl;
+			cout << this->hint_ << ": Safe distance in XY: " << this->safeDistXY_ << endl;
+		}
+
+		// safety distance for random sampling in z
+		if (not this->nh_.getParam(this->ns_ + "/safe_distance_z", this->safeDistZ_)){
+			this->safeDistZ_ = 0.0;
+			cout << this->hint_ << ": No safe distance in Z param. Use default: 0.0" << endl;
+		}
+		else{
+			cout << this->hint_ << ": Safe distance in Z: " << this->safeDistZ_ << endl;
+		}
+
+		// safety distance check unknown
+		if (not this->nh_.getParam(this->ns_ + "/safe_distance_check_unkonwn", this->safeDistCheckUnknown_)){
+			this->safeDistCheckUnknown_ = true;
+			cout << this->hint_ << ": No safe distance check unknown param. Use default: true" << endl;
+		}
+		else{
+			cout << this->hint_ << ": Safe distance check unknown: " << this->safeDistCheckUnknown_ << endl;
 		}
 
 		//Camera Parameters	
@@ -522,7 +540,7 @@ namespace globalPlanner{
 				int countSampleOnce = 0;
 				for (std::shared_ptr<PRM::Node> fnNN : fnNeighbors){
 					n = this->extendNode(fnNN, fn);
-					if (this->isPosValid(n->pos, this->safeDist_)){
+					if (this->isPosValid(n->pos, this->safeDistXY_, this->safeDistZ_)){
 						std::shared_ptr<PRM::Node> nn = this->roadmap_->nearestNeighbor(n);
 						double distToNN = (n->pos - nn->pos).norm();
 						if (distToNN >= this->distThresh_){
@@ -639,7 +657,7 @@ namespace globalPlanner{
 		// record the invalid nodes
 		std::unordered_set<std::shared_ptr<PRM::Node>> invalidSet;
 		for (std::shared_ptr<PRM::Node> n : this->prmNodeVec_){ // new nodes
-			if (not this->isPosValid(n->pos, this->safeDist_)){// 1. new nodes
+			if (not this->isPosValid(n->pos, this->safeDistXY_, this->safeDistZ_)){// 1. new nodes
 			// if (this->map_->isInflatedOccupied(n->pos)){// 1. new nodes
 				invalidSet.insert(n);
 			}	
@@ -733,7 +751,7 @@ namespace globalPlanner{
 			}
 			// if ((n->pos - this->position_).norm() >= 1.0){
 			if ((n->pos - this->position_).norm() >= 0.0){			
-				if (this->isPosValid(n->pos, this->safeDist_)){
+				if (this->isPosValid(n->pos, this->safeDistXY_, this->safeDistZ_)){
 					goalCandidates.push_back(n);
 					// cout << "Valid goal candidate: " << n->pos.transpose() << " voxel: " << n->numVoxels  << endl;
 				}
@@ -760,7 +778,7 @@ namespace globalPlanner{
 			// if ((n->pos - this->position_).norm() >= 1.0){ 
 			if ((n->pos - this->position_).norm() >= 0.0){	
 				// cout << "candidate goal: " << n->pos.transpose() << endl;	
-				if (this->isPosValid(n->pos, this->safeDist_)){
+				if (this->isPosValid(n->pos, this->safeDistXY_, this->safeDistZ_)){
 					goalCandidates.push_back(n);
 					// cout << "Valid goal candidate: " << n->pos.transpose() << " voxel: " << n->numVoxels  << endl;
 				}			
@@ -887,12 +905,19 @@ namespace globalPlanner{
 
 
 
-	bool DEP::isPosValid(const Eigen::Vector3d& p, double safeDist){
-		for (double x=p(0)-safeDist; x<=p(0)+safeDist; x+=this->map_->getRes()){
-			for (double y=p(1)-safeDist; y<=p(1)+safeDist; y+=this->map_->getRes()){
-				for (double z=p(2)-safeDist; z<=p(2)+safeDist; z+=this->map_->getRes()){
-					if (not this->map_->isInflatedFree(Eigen::Vector3d (x, y, z))){
-						return false;
+	bool DEP::isPosValid(const Eigen::Vector3d& p, double safeDistXY, double safeDistZ){
+		for (double x=p(0)-safeDistXY; x<=p(0)+safeDistXY; x+=this->map_->getRes()){
+			for (double y=p(1)-safeDistXY; y<=p(1)+safeDistXY; y+=this->map_->getRes()){
+				for (double z=p(2)-safeDistZ; z<=p(2)+safeDistZ; z+=this->map_->getRes()){
+					if (this->safeDistCheckUnknown_){
+						if (not this->map_->isInflatedFree(Eigen::Vector3d (x, y, z))){
+							return false;
+						}
+					}
+					else{
+						if (this->map_->isInflatedOccupied(Eigen::Vector3d (x, y, z))){
+							return false;
+						}
 					}
 				}
 			}
@@ -926,7 +951,7 @@ namespace globalPlanner{
 			p(1) = globalPlanner::randomNumber(minSampleRegion(1), maxSampleRegion(1));
 			p(2) = globalPlanner::randomNumber(minSampleRegion(2), maxSampleRegion(2));
 
-			valid = this->isPosValid(p, this->safeDist_);
+			valid = this->isPosValid(p, this->safeDistXY_, this->safeDistZ_);
 
 			// valid = this->map_->isInflatedFree(p);
 		}

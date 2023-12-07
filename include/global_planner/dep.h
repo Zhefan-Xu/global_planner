@@ -47,7 +47,9 @@ namespace globalPlanner{
 		int globalSampleThresh_;
 		int frontierSampleThresh_;
 		double distThresh_;
-		double safeDist_;
+		double safeDistXY_;
+		double safeDistZ_;
+		bool safeDistCheckUnknown_;
 		double horizontalFOV_;
 		double verticalFOV_;
 		double dmin_;
@@ -103,7 +105,7 @@ namespace globalPlanner{
 
 
 		// help function
-		bool isPosValid(const Eigen::Vector3d& p, double safeDist);
+		bool isPosValid(const Eigen::Vector3d& p, double safeDistXY, double safeDistZ);
 		std::shared_ptr<PRM::Node> randomConfigBBox(const Eigen::Vector3d& minRegion, const Eigen::Vector3d& maxRegion);
 		bool sensorRangeCondition(const shared_ptr<PRM::Node>& n1, const shared_ptr<PRM::Node>& n2);
 		bool sensorFOVCondition(const Eigen::Vector3d& sample, const Eigen::Vector3d& pos);
