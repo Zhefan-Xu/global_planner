@@ -1,5 +1,5 @@
 /*
-*	File: dep_node.cpp
+*	File: test_dep_node.cpp
 *	---------------
 *   dynamic exploration planner test
 */

@@ -1,3 +1,8 @@
+/*
+*	File: rrt_interactive_node.cpp
+*	---------------
+*   rrt interactive
+*/
 #include <ros/ros.h>
 #include <global_planner/rrtOctomap.h>
 #include <geometry_msgs/PoseStamped.h>

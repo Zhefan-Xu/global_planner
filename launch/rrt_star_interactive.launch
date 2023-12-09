@@ -1,11 +1,11 @@
 <launch>
 	<rosparam>/use_sim_time: 0</rosparam>
 	<!-- planner -->
-	<rosparam file="$(find global_planner)/cfg/planner.yaml" />
-	<node pkg="global_planner" type="rrtStarInteractiveNode" name="rrtStarInteractiveNode" output="screen" />
+	<rosparam file="$(find global_planner)/cfg/rrt_planner.yaml" />
+	<node pkg="global_planner" type="rrt_star_interactive_node" name="rrt_star_interactive_node" output="screen" />
 
 	<!-- map -->
 	<arg name="map_location" default="$(find global_planner)/map/tree.bt"/>
 	<node pkg="octomap_server" type="octomap_server_node" name="octomap_server_node" args="$(arg map_location)" output="log" />
-	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find global_planner)/rviz/Interactive.rviz"/>
+	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find global_planner)/rviz/rrt_interactive.rviz"/>
 </launch>

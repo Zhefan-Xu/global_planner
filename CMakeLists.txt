@@ -146,9 +146,9 @@ add_library(${PROJECT_NAME} src/globalPlannerLib.cpp
 # add_executable(test_kdtree src/test/test_kdtree.cpp)
 # add_executable(test_prm_kdtree src/test/test_prm_kdtree.cpp)
 # add_executable(test_blob_detection src/test/test_blob_detection.cpp)
-add_executable(rrtInteractiveNode src/rrtInteractiveNode.cpp)
-add_executable(rrtStarInteractiveNode src/rrtStarInteractiveNode.cpp)
-add_executable(dep_node src/dep_node.cpp)
+add_executable(rrt_interactive_node src/rrt_interactive_node.cpp)
+add_executable(rrt_star_interactive_node src/rrt_star_interactive_node.cpp)
+add_executable(test_dep_node src/test_dep_node.cpp)
 
 
 ## Rename C++ executable without prefix
@@ -170,9 +170,9 @@ target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${OpenCV_LIBS})
 # target_link_libraries(test_kdtree ${catkin_LIBRARIES})
 # target_link_libraries(test_prm_kdtree ${catkin_LIBRARIES} ${PROJECT_NAME} ${OpenCV_LIBS})
 # target_link_libraries(test_blob_detection ${catkin_LIBRARIES})
-target_link_libraries(rrtInteractiveNode ${catkin_LIBRARIES})
-target_link_libraries(rrtStarInteractiveNode ${catkin_LIBRARIES})
-target_link_libraries(dep_node ${catkin_LIBRARIES} ${PROJECT_NAME})
+target_link_libraries(rrt_interactive_node ${catkin_LIBRARIES})
+target_link_libraries(rrt_star_interactive_node ${catkin_LIBRARIES})
+target_link_libraries(test_dep_node ${catkin_LIBRARIES} ${PROJECT_NAME})
 
 
 #############
