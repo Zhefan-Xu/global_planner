@@ -904,6 +904,26 @@ namespace globalPlanner{
 	}
 
 
+	bool DEP::isPosValid(const Eigen::Vector3d& p){
+		for (double x=p(0)-this->safeDistXY_; x<=p(0)+this->safeDistXY_; x+=this->map_->getRes()){
+			for (double y=p(1)-this->safeDistXY_; y<=p(1)+this->safeDistXY_; y+=this->map_->getRes()){
+				for (double z=p(2)-this->safeDistZ_; z<=p(2)+this->safeDistZ_; z+=this->map_->getRes()){
+					if (this->safeDistCheckUnknown_){
+						if (not this->map_->isInflatedFree(Eigen::Vector3d (x, y, z))){
+							return false;
+						}
+					}
+					else{
+						if (this->map_->isInflatedOccupied(Eigen::Vector3d (x, y, z))){
+							return false;
+						}
+					}
+				}
+			}
+		}
+		return true;			
+	}
+
 
 	bool DEP::isPosValid(const Eigen::Vector3d& p, double safeDistXY, double safeDistZ){
 		for (double x=p(0)-safeDistXY; x<=p(0)+safeDistXY; x+=this->map_->getRes()){

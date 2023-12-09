@@ -105,6 +105,7 @@ namespace globalPlanner{
 
 
 		// help function
+		bool isPosValid(const Eigen::Vector3d& p);
 		bool isPosValid(const Eigen::Vector3d& p, double safeDistXY, double safeDistZ);
 		std::shared_ptr<PRM::Node> randomConfigBBox(const Eigen::Vector3d& minRegion, const Eigen::Vector3d& maxRegion);
 		bool sensorRangeCondition(const shared_ptr<PRM::Node>& n1, const shared_ptr<PRM::Node>& n2);
