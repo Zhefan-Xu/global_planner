@@ -39,5 +39,5 @@ Use ```2D Nav Goal``` in ```Rviz``` to select start and goal position in the map
 - DEP planner parameters (for unknown exploration) can be found in ```global_planner/cfg/dep_params.yaml```.
 
 ## IV. Code Exmaple & API:
-Please see example ```global_planner/src/rrt_interactive_node.cpp``` for RRT-based planner and ```test_dep_node``` for unkonwn exploration planner. The example shows how to use the code API for your applications. 
+Please see example ```global_planner/src/rrt_interactive_node.cpp``` for RRT-based planner and ```global_planner/src/test_dep_node.cpp``` for unkonwn exploration planner. The example shows how to use the code API for your applications. 
 
