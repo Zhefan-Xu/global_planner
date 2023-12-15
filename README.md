@@ -1,5 +1,5 @@
-# Global Planner for Quadcopter
-This is a C++ based RRT/RRT* implementation in ROS using [Octomap](http://wiki.ros.org/octomap). It is mainly used for quadcopter waypoint planning.
+# Global Planner Library for Autonomous Robots
+This package is a library implementing some of the global waypoint planning algorithms, such as RRT, RRT*, DEP (an unknown exploration planner), for autonomous robots. 
 
 ### Install:
 Tested on Ubuntu 18.04, 20.04 with ROS melodic/Noetic. Current version depends on [Octomap](http://wiki.ros.org/octomap).
