@@ -1,6 +1,9 @@
 # Global Planner Library for Autonomous Robots
 This package is a library implementing some of the global waypoint planning algorithms, such as RRT, RRT*, [DEP](https://github.com/Zhefan-Xu/DEP) (our unknown exploration planner), based on occupancy voxel map and Octomap for autonomous mobile robots. 
 
+**Author**: [Zhefan Xu](https://zhefanxu.com/) and Christopher Suzuki from the Computational Engineering & Robotics Lab (CERLAB) at Carnegie Mellon University (CMU).
+
+
 ## I. Installation Guide:
 This repo has been tested on ROS Melodic with Ubuntu 18.04 and ROS Noetic with Ubuntu 20.04 and it depends on [map_manager](https://github.com/Zhefan-Xu/map_manager) which provides the occupancy voxel map implementation and [octomap_ros](http://wiki.ros.org/octomap) for octree-based map representation. 
 
