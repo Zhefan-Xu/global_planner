@@ -23,6 +23,7 @@ For simple RRT-based planner demo, please run the following commands:
 roslaunch global_planner rrtInteractive.launch
 ```
 Use ```2D Nav Goal``` in ```Rviz``` to select start and goal position in the map.
+
 ![Screenshot from 2022-01-22 11-47-43](https://user-images.githubusercontent.com/55560905/150648123-8c1d9102-0b44-4851-82f5-fff0101be0ac.png)
 
 
