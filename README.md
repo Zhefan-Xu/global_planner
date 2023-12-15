@@ -1,15 +1,16 @@
 # Global Planner Library for Autonomous Robots
-This package is a library implementing some of the global waypoint planning algorithms, such as RRT, RRT*, DEP (an unknown exploration planner), for autonomous robots. 
+This package is a library implementing some of the global waypoint planning algorithms, such as RRT, RRT*, [DEP](https://github.com/Zhefan-Xu/DEP) (our unknown exploration planner), based on occupancy voxel map and Octomap for autonomous mobile robots. 
 
-### Install:
-Tested on Ubuntu 18.04, 20.04 with ROS melodic/Noetic. Current version depends on [Octomap](http://wiki.ros.org/octomap).
+## I. Installation Guide:
+This repo has been tested on ROS Melodic with Ubuntu 18.04 and ROS Noetic with Ubuntu 20.04 and it depends on [map_manager](https://github.com/Zhefan-Xu/map_manager) which provides the occupancy voxel map implementation and [octomap_ros](http://wiki.ros.org/octomap) for octree-based map representation. 
+
 ```
 cd ~/catkin_ws/src
 git clone https://github.com/Zhefan-Xu/global_planner.git
 cd ~/catkin_ws
 catkin_make
 ```
-### Run Planner DEMO:
+## Run Planner DEMO:
 Start the simulator by running:
 ```
 roslaunch global_planner rrtInteractive.launch
@@ -18,7 +19,7 @@ Use ```2D Nav Goal``` in ```Rviz``` to select start and goal position in the map
 ![Screenshot from 2022-01-22 11-47-43](https://user-images.githubusercontent.com/55560905/150648123-8c1d9102-0b44-4851-82f5-fff0101be0ac.png)
 
 
-### Parameters:
+## Parameters:
 RRT planner paramters can be changed in ```global_planner/cfg/planner.yaml```. The followings are the default values: 
 - ```collision_box: [0.4, 0.4, 0.4]```
 - ```env_box: [-100, 100, -100, 100, 0, 1.5]```
@@ -32,7 +33,7 @@ RRT planner paramters can be changed in ```global_planner/cfg/planner.yaml```. T
 - ```neighborhood_radius: 1.0``` (RRT* Only)
 - ```max_num_neighbors: 10``` (RRT* Only)
 
-### Code Exmaple & API:
+## Code Exmaple & API:
 Please see example ```global_planner/src/rrtInteractiveNode```. The example shows how to set start and goal position, and also how to find path. 
 
 Note: the planner needs to call octomap service ```octomap_binary```, make sure to turn on your ```octomap server```.
