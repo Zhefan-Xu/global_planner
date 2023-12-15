@@ -39,6 +39,7 @@ Use ```2D Nav Goal``` in ```Rviz``` to select start and goal position in the map
   - ```vis_path: True```
   - ```neighborhood_radius: 1.0``` (RRT* Only)
   - ```max_num_neighbors: 10``` (RRT* Only)
+    
 - DEP planner parameters (for unknown exploration) can be found in ```global_planner/cfg/dep_params.yaml```.
 
 ## IV. Code Exmaple & API:
