@@ -26,6 +26,10 @@ Use ```2D Nav Goal``` in ```Rviz``` to select start and goal position in the map
 
 ![Screenshot from 2022-01-22 11-47-43](https://user-images.githubusercontent.com/55560905/150648123-8c1d9102-0b44-4851-82f5-fff0101be0ac.png)
 
+The example of the exploration planner can be shown as below (Please follow this [repo](https://github.com/Zhefan-Xu/autonomous_flight) for instructions):
+
+![290708429-3dfd5516-e50b-4185-b502-1bfad6b36ae3](https://github.com/Zhefan-Xu/global_planner/assets/55560905/597b4e86-04c8-403a-a875-a62f1cd94dfa)
+
 
 ## III. Parameters
 - RRT-based planner paramters can be found in ```global_planner/cfg/planner.yaml```. The followings are the default values: 
