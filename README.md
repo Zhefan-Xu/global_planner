@@ -12,7 +12,6 @@ This repo has been tested on ROS Melodic with Ubuntu 18.04 and ROS Noetic with U
 sudo apt install ros-[melodic/noetic]-octomap* # octomap
 
 cd ~/catkin_ws/src
-git clone https://github.com/Zhefan-Xu/map_manager.git # occupancy voxel map. please refer to the original repo if you meet any issue.
 git clone https://github.com/Zhefan-Xu/global_planner.git
 
 cd ~/catkin_ws
