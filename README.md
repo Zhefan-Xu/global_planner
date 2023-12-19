@@ -71,7 +71,7 @@ Please change all the frame id ```/map``` to ```map``` in ```octomap_mapping/oct
 cd ~/catkin_ws
 catkin_make
 ```
-# VI. Citation and Reference:
+## VI. Citation and Reference:
 If you find this work useful, please cite the paper:
 ```
 @article{xu2023heuristic,
