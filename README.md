@@ -1,7 +1,7 @@
 # Global Planner Library for Autonomous Robots
 This package is a library implementing various global waypoint planning algorithms, such as RRT, RRT*, [DEP](https://github.com/Zhefan-Xu/DEP) (our unknown exploration planner), based on the occupancy voxel map and the Octomap for autonomous mobile robots. 
 
-**Author**: [Zhefan Xu](https://zhefanxu.com/) and Christopher Suzuki, Computational Engineering & Robotics Lab (CERLAB) at Carnegie Mellon University (CMU).
+**Authors**: [Zhefan Xu](https://zhefanxu.com/) and Christopher Suzuki, Computational Engineering & Robotics Lab (CERLAB) at Carnegie Mellon University (CMU).
 
 
 ## I. Installation Guide
