@@ -6,7 +6,6 @@
 #include <ros/ros.h>
 #include <global_planner/rrtStarOctomap.h>
 #include <geometry_msgs/PoseStamped.h>
-#include <visualization_msgs/Marker.h>
 #include <thread>
 #include <mutex>
 
@@ -22,7 +21,6 @@ void clickedPointCB(const geometry_msgs::PoseStamped::ConstPtr& cp){
 	newPoint[2] = 1.0; // set height to be 1.0 m
 	newMsg = true;
 }
-
 
 ros::Publisher startVisPub;
 ros::Publisher goalVisPub;
@@ -58,15 +56,16 @@ int main(int argc, char** argv){
 
 	// subscriber for clicked start and goal:
 	ros::Subscriber clickedPointSub = nh.subscribe("/move_base_simple/goal", 1000, clickedPointCB);
+	ros::Publisher posePub = nh.advertise<geometry_msgs::PoseStamped>("/trajectory_pose", 1000);
 	startVisPub = nh.advertise<visualization_msgs::Marker>("/start_position", 1000);
 	goalVisPub = nh.advertise<visualization_msgs::Marker>("/goal_position", 1000);
 	std::thread startVisWorker_ = std::thread(publishStartVis);
 	std::thread goalVisWorker_ = std::thread(publishGoalVis);
-
-	// Parameters for rrt planner:
-	const int N = 3; // dimension	
+	
+	const int N = 3; // dimension
 	globalPlanner::rrtStarOctomap<N> rrtStarPlanner (nh);
 	cout << rrtStarPlanner << endl;
+
 
 	int countLoop = 0;
 	ros::Rate r(10);
@@ -140,9 +139,11 @@ int main(int argc, char** argv){
 			r.sleep();
 		}
 
-		
+		// generate waypoint path
 		nav_msgs::Path path;
 		rrtStarPlanner.makePlan(path);
+
+
 
 		++countLoop;
 		cout << "----------------------------------------------------" << endl;

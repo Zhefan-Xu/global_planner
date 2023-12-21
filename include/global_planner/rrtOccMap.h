@@ -67,79 +67,79 @@ namespace globalPlanner{
 		// Map Resolution for Collisiong checking
 		if (not this->nh_.getParam("rrt/map_resolution", this->mapRes_)){
 			this->mapRes_ = 0.2;
-			cout << "[Global Planner INFO]: No Map Resolition Parameter. Use default map resolution: 0.2." << endl;
+			cout << "[RRTPlanner]: No Map Resolition Parameter. Use default map resolution: 0.2." << endl;
 		}
 		else{
-			cout << "[Global Planner INFO]: Map resolution: " << this->mapRes_  << "." << endl;
+			cout << "[RRTPlanner]: Map resolution: " << this->mapRes_  << "." << endl;
 		}
 
 		// Timeout:
 		if (not this->nh_.getParam("rrt/timeout", this->timeout_)){
 			this->timeout_ = 0.5;
-			cout << "[Global Planner INFO]: No Time Out Parameter. Use default: 0.5." << endl;
+			cout << "[RRTPlanner]: No Time Out Parameter. Use default: 0.5." << endl;
 		}
 		else{
-			cout << "[Global Planner INFO]: Time out is set to: " << this->timeout_  << "." << endl;
+			cout << "[RRTPlanner]: Time out is set to: " << this->timeout_  << "." << endl;
 		}
 
 		// Environment Size (maximum)
 		if (not this->nh_.getParam("rrt/env_box", this->envBox_)){
 			std::vector<double> defaultEnvBox {-100, 100, -100, 100, 0, 1.5};
-			cout << "[Global Planner INFO]: No Environment Box Parameter. Use default env box: [-100, 100, -100, 100, 0, 1.5]." << endl;
+			cout << "[RRTPlanner]: No Environment Box Parameter. Use default env box: [-100, 100, -100, 100, 0, 1.5]." << endl;
 		}
 
 		// Incremental Distance (For RRT)
 		if (not this->nh_.getParam("rrt/incremental_distance", this->delQ_)){
 			this->delQ_ = 0.3;
-			cout << "[Global Planner INFO]: No RRT Incremental Distance Parameter. Use default value: 0.3 m." << endl;
+			cout << "[RRTPlanner]: No RRT Incremental Distance Parameter. Use default value: 0.3 m." << endl;
 		}
 		else{
-			cout << "[GLobal Planner INFO]: RRT Incremental Distance: " << this->delQ_ << " m." << endl;
+			cout << "[RRTPlanner]: RRT Incremental Distance: " << this->delQ_ << " m." << endl;
 		}
 
 		// Goal Reach Distance
 		if (not this->nh_.getParam("rrt/goal_reach_distance", this->dR_)){
 			this->dR_ = 0.4;
-			cout << "[Global Planner INFO]: No RRT Goal Reach Distance Parameter. Use default value: 0.4 m." << endl;
+			cout << "[RRTPlanner]: No RRT Goal Reach Distance Parameter. Use default value: 0.4 m." << endl;
 		}
 		else{
-			cout << "[Global Planner INFO]: RRT Goal Reach Distance: " << this->dR_ << " m." << endl;
+			cout << "[RRTPlanner]: RRT Goal Reach Distance: " << this->dR_ << " m." << endl;
 		}
 
 		// RRT Goal Connect Ratio
 		if (not this->nh_.getParam("rrt/connect_goal_ratio", this->connectGoalRatio_)){
 			this->connectGoalRatio_ = 0.2;
-			cout << "[Global Planner INFO]: No Goal Connect Ratio Parameter. Use default: 0.2." << endl;
+			cout << "[RRTPlanner]: No Goal Connect Ratio Parameter. Use default: 0.2." << endl;
 		}
 		else{
-			cout << "[Global Planner INFO]: Goal Connect Ratio: " << this->connectGoalRatio_  << "." << endl;
+			cout << "[RRTPlanner]: Goal Connect Ratio: " << this->connectGoalRatio_  << "." << endl;
 		}	
 
 		// maximum shortcut threshold
 		if (not this->nh_.getParam("rrt/max_shortcut_dist", this->maxShortcutThresh_)){
 			this->maxShortcutThresh_ = 5.0;
-			cout << "[Global Planner INFO]: No Max Shortcut Distance Threshold Parameter. Use default: 5.0." << endl;
+			cout << "[RRTPlanner]: No Max Shortcut Distance Threshold Parameter. Use default: 5.0." << endl;
 		}	
 		else{
-			cout << "[Global Planner INFO]: Max Shortcut Distance: " << this->maxShortcutThresh_ << " m." << endl;
+			cout << "[RRTPlanner]: Max Shortcut Distance: " << this->maxShortcutThresh_ << " m." << endl;
 		}
 
 		// ignore unknown
 		if (not this->nh_.getParam("rrt/ignore_unknown", this->ignoreUnknown_)){
 			this->ignoreUnknown_ = false;
-			cout << "[Global Planner INFO]: No ignore unknown Parameter. Use default: false." << endl;
+			cout << "[RRTPlanner]: No ignore unknown Parameter. Use default: false." << endl;
 		}	
 		else{
-			cout << "[Global Planner INFO]: Ignore unknown: " << this->ignoreUnknown_ << "." << endl;
+			cout << "[RRTPlanner]: Ignore unknown: " << this->ignoreUnknown_ << "." << endl;
 		}
 
 		// goal check
 		if (not this->nh_.getParam("rrt/pass_goal_check", this->passGoalCheck_)){
 			this->passGoalCheck_ = false;
-			cout << "[Global Planner INFO]: No pass goal check Parameter. Use default: false." << endl;
+			cout << "[RRTPlanner]: No pass goal check Parameter. Use default: false." << endl;
 		}	
 		else{
-			cout << "[Global Planner INFO]: Pass goal check: " << this->passGoalCheck_ << "." << endl;
+			cout << "[RRTPlanner]: Pass goal check: " << this->passGoalCheck_ << "." << endl;
 		}
 
 	}
@@ -201,7 +201,7 @@ namespace globalPlanner{
 		int sampleNum = 0;
 		KDTree::Point<N> qBack;
 
-		// cout << "[Global Planner INFO]: Start Planning!" << endl;
+		// cout << "[RRTPlanner]: Start Planning!" << endl;
 		double nearestDistance = std::numeric_limits<double>::max();
 		KDTree::Point<N> nearestPoint = this->start_;
 		double currentDistance = KDTree::Distance(nearestPoint, this->goal_);
@@ -263,23 +263,23 @@ namespace globalPlanner{
 			}
 		}
 
-		// cout << "[Global Planner INFO]: Finish planning with sample number: " << sampleNum << endl;
+		// cout << "[RRTPlanner]: Finish planning with sample number: " << sampleNum << endl;
 
 		// backtrace
 		std::vector<KDTree::Point<N>> planRaw;
 		if (findPath){
 			this->backTrace(qBack, planRaw);
-			// cout << "[Global Planner INFO]: Path Found! Time: " << dT << "s. " << endl;
+			// cout << "[RRTPlanner]: Path Found! Time: " << dT << "s. " << endl;
 		}
 		else{
 			this->backTrace(nearestPoint, planRaw);
 			if (planRaw.size() == 1){
 				plan = planRaw;
-				cout << "[Global Planner INFO]: TIMEOUT! Start position might not be feasible!!" << endl;
+				cout << "[RRTPlanner]: TIMEOUT! Start position might not be feasible!!" << endl;
 				return;
 			}
 			else{
-				cout << "[Global Planner INFO]: TIMEOUT!"<< "(>" << this->timeout_ << "s)" << ", Return closest path. Distance: " << nearestDistance << " m." << endl;
+				cout << "[RRTPlanner]: TIMEOUT!"<< "(>" << this->timeout_ << "s)" << ", Return closest path. Distance: " << nearestDistance << " m." << endl;
 			}
 		}
 

@@ -172,7 +172,7 @@ namespace globalPlanner{
 	template <std::size_t N>
 	rrtBase<N>::rrtBase(std::vector<double> collisionBox, std::vector<double> envBox, double delQ, double dR, double connectGoalRatio, double timeout)
 	: collisionBox_(collisionBox), envBox_(envBox), delQ_(delQ), dR_(dR), connectGoalRatio_(connectGoalRatio), timeout_(timeout){
-		cout << "[Global Planner INFO]: Please update start and goal!" << endl;
+		cout << "[RRTPlanner]: Please update start and goal!" << endl;
 		this->emptyToken_[0] = -11311; 
 	}
 

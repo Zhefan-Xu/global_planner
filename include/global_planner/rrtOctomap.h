@@ -125,68 +125,68 @@ namespace globalPlanner{
 		// Map Resolution for Collisiong checking
 		if (not this->nh_.getParam("map_resolution", this->mapRes_)){
 			this->mapRes_ = 0.2;
-			cout << "[Global Planner INFO]: No Map Resolition Parameter. Use default map resolution: 0.2." << endl;
+			cout << "[RRTPlanner]: No Map Resolition Parameter. Use default map resolution: 0.2." << endl;
 		}
 
 		// Visualize RRT 
 		if (not this->nh_.getParam("vis_RRT", this->visRRT_)){
 			this->visRRT_ = false;
-			cout << "[GLobal Planner INFO]: No RRT visualization by default." << endl;
+			cout << "[RRTPlanner]: No RRT visualization by default." << endl;
 		}
 
 		// Visualize Path
 		if (not this->nh_.getParam("vis_path", this->visPath_)){
 			this->visPath_ = true;
-			cout << "[Global Planner INFO]: Visualize Path by default." << endl;
+			cout << "[RRTPlanner]: Visualize Path by default." << endl;
 		}
 
 		// Collision Box
 		if (not this->nh_.getParam("collision_box", this->collisionBox_)){
 			std::vector<double> defaultCollisionBox {1.0, 1.0, 0.6};
 			this->collisionBox_ = defaultCollisionBox;
-			cout << "[Global Planner INFO]: No Collision Box Parameter. Use default collision Box: [1.0, 1.0, 0.6]." << endl;
+			cout << "[RRTPlanner]: No Collision Box Parameter. Use default collision Box: [1.0, 1.0, 0.6]." << endl;
 		}
 
 		// Environment Size (maximum)
 		if (not this->nh_.getParam("env_box", this->envBox_)){
 			std::vector<double> defaultEnvBox {-100, 100, -100, 100, 0, 1.5};
-			cout << "[Global Planner INFO]: No Environment Box Parameter. Use default env box: [-100, 100, -100, 100, 0, 1.5]." << endl;
+			cout << "[RRTPlanner]: No Environment Box Parameter. Use default env box: [-100, 100, -100, 100, 0, 1.5]." << endl;
 		}
 
 		// Incremental Distance (For RRT)
 		if (not this->nh_.getParam("rrt_incremental_distance", this->delQ_)){
 			this->delQ_ = 0.3;
-			cout << "[Global Planner INFO]: No RRT Incremental Distance Parameter. Use default value: 0.3m." << endl;
+			cout << "[RRTPlanner]: No RRT Incremental Distance Parameter. Use default value: 0.3m." << endl;
 		}
 
 		// Goal Reach Distance
 		if (not this->nh_.getParam("goal_reach_distance", this->dR_)){
 			this->dR_ = 0.4;
-			cout << "[Global Planner INFO]: No RRT Goal Reach Distance Parameter. Use default value: 0.4m." << endl;
+			cout << "[RRTPlanner]: No RRT Goal Reach Distance Parameter. Use default value: 0.4m." << endl;
 		}
 
 		// RRT Connect Goal Ratio
 		if (not this->nh_.getParam("rrt_connect_goal_ratio", this->connectGoalRatio_)){
 			this->connectGoalRatio_ = 0.2;
-			cout << "[Global Planner INFO]: No RRT Connect Goal Ratio Parameter. Use default value: 0.2." << endl;
+			cout << "[RRTPlanner]: No RRT Connect Goal Ratio Parameter. Use default value: 0.2." << endl;
 		}
 
 		// Time out:
 		if (not this->nh_.getParam("timeout", this->timeout_)){
 			this->timeout_ = 2.0;
-			cout << "[Global Planner INFO]: No Timeout Parameter. Use default value: 3.0s." << endl;
+			cout << "[RRTPlanner]: No Timeout Parameter. Use default value: 3.0s." << endl;
 		}
 
 		// ignore unknown voxel
 		if (not this->nh_.getParam("ignore_unknown", this->ignoreUnknown_)){
 			this->ignoreUnknown_ = false;
-			cout << "[Global Planner INFO]: No Ignore Unknown Parameter. Use default: false." << endl;
+			cout << "[RRTPlanner]: No Ignore Unknown Parameter. Use default: false." << endl;
 		}
 
 		// maximum shortcut threshold
 		if (not this->nh_.getParam("max_shortcut_dist", this->maxShortcutThresh_)){
 			this->maxShortcutThresh_ = 5.0;
-			cout << "[Global Planner INFO]: No Max Shortcut Distance Threshold Parameter. Use default: 5.0." << endl;
+			cout << "[RRTPlanner]: No Max Shortcut Distance Threshold Parameter. Use default: 5.0." << endl;
 		}
 
 
@@ -196,11 +196,11 @@ namespace globalPlanner{
 
 		ros::Rate r (10);
 		while (ros::ok() and this->map_ == NULL){
-			cout << "[Global Planner INFO]: Wait for Map..." << endl;
+			cout << "[RRTPlanner]: Wait for Map..." << endl;
 			ros::spinOnce();
 			r.sleep();
 		}
-		cout << "[Global Planner INFO]: Map Updated!" << endl;
+		cout << "[RRTPlanner]: Map Updated!" << endl;
 
 		// Visualization:
 		this->startVisModule();
@@ -252,7 +252,7 @@ namespace globalPlanner{
 		ros::Rate rate(10);
 		while (not service_success and ros::ok()){
 			service_success = this->mapClient_.call(mapSrv);
-			ROS_INFO("[Global Planner INFO]: Wait for Octomap Service...");
+			ROS_INFO("[RRTPlanner]: Wait for Octomap Service...");
 			rate.sleep();
 		}
 		octomap::AbstractOcTree* abtree = octomap_msgs::binaryMsgToMap(mapSrv.response.map);
@@ -263,7 +263,7 @@ namespace globalPlanner{
 		this->map_->getMetricMin(min_x, min_y, min_z);
 		this->envLimit_[0] = min_x; this->envLimit_[1] = max_x; this->envLimit_[2] = min_y; this->envLimit_[3] = max_y; this->envLimit_[4] = min_z; this->envLimit_[5] = max_z;
 		// this->updateSampleRegion();
-		cout << "[Global Planner INFO]: Map updated!" << endl;
+		cout << "[RRTPlanner]: Map updated!" << endl;
 	}
 
 	template <std::size_t N>
@@ -297,7 +297,7 @@ namespace globalPlanner{
 	void rrtOctomap<N>::clearEnvBox(){
 		if (not this->nh_.getParam("env_box", this->envBox_)){
 			std::vector<double> defaultEnvBox {-100, 100, -100, 100, 0, 1.5};
-			cout << "[Global Planner INFO]: No Environment Box Parameter. Use default env box: [-100, 100, -100, 100, 0, 1.5]." << endl;
+			cout << "[RRTPlanner]: No Environment Box Parameter. Use default env box: [-100, 100, -100, 100, 0, 1.5]." << endl;
 		}
 		this->notUpdateSampleRegion_ = false;
 	}
@@ -487,7 +487,6 @@ namespace globalPlanner{
 			p.z() = randomNumber(this->sampleRegion_[4], this->sampleRegion_[5]);
 			valid = not this->checkCollision(p);
 		}
-
 		qRand[0] = p.x(); qRand[1] = p.y(); qRand[2] = p.z();
 	}
 
@@ -514,7 +513,7 @@ namespace globalPlanner{
 		int sampleNum = 0;
 		KDTree::Point<N> qBack;
 
-		cout << "[Global Planner INFO]: Start planning!" << endl;
+		cout << "[RRTPlanner]: Start planning!" << endl;
 		double nearestDistance = std::numeric_limits<double>::max();  // if cannot find path to goal, find nearest way to goal
 		KDTree::Point<N> nearestPoint = this->start_;
 		double currentDistance = KDTree::Distance(nearestPoint, this->goal_);
@@ -569,23 +568,23 @@ namespace globalPlanner{
 				}
 			}
 		}
-		cout << "[Global Planner INFO]: Finish planning. with sample number: " << sampleNum << endl;
+		cout << "[RRTPlanner]: Finish planning. with sample number: " << sampleNum << endl;
 
 		// final step: back trace using the last one
 		std::vector<KDTree::Point<N>> planRaw;
 		if (findPath){
 			this->backTrace(qBack, planRaw);
-			cout << "[Global Planner INFO]: path found! Time: " << dT << "s."<< endl;
+			cout << "[RRTPlanner]: path found! Time: " << dT << "s."<< endl;
 		}
 		else{
 			this->backTrace(nearestPoint, planRaw);
 			if (planRaw.size() == 1){
 				plan = planRaw;
-				cout << "[Global Planner INFO]: TIMEOUT! Start position might not be feasible!!" << endl;
+				cout << "[RRTPlanner]: TIMEOUT! Start position might not be feasible!!" << endl;
 				return;
 			}
 			else{
-				cout << "[Global Planner INFO]: TIMEOUT!"<< "(>" << this->timeout_ << "s)" << ", Return closest path. Distance: " << nearestDistance << " m." << endl;
+				cout << "[RRTPlanner]: TIMEOUT!"<< "(>" << this->timeout_ << "s)" << ", Return closest path. Distance: " << nearestDistance << " m." << endl;
 			}
 		}
 		
@@ -785,7 +784,7 @@ namespace globalPlanner{
 	template <std::size_t N>
 	std::ostream &operator<<(std::ostream &os, rrtOctomap<N> &rrtplanner){
         os << "========================INFO========================\n";
-        os << "[Global Planner INFO]: RRT planner with octomap\n";
+        os << "[RRTPlanner]: RRT planner with octomap\n";
         os << "[Connect Ratio]: " << rrtplanner.getConnectGoalRatio() << "\n";
         // os << "[Start/Goal]:  " <<  rrtplanner.getStart() << "=>" <<  rrtplanner.getGoal() << "\n";
         std::vector<double> collisionBox = rrtplanner.getCollisionBox();
