@@ -5,7 +5,7 @@ This package is a library implementing various global waypoint planning algorith
 
 
 ## I. Installation Guide
-This repo has been tested on ROS Melodic with Ubuntu 18.04 and ROS Noetic with Ubuntu 20.04 and it depends on [map_manager](https://github.com/Zhefan-Xu/map_manager) which provides the occupancy voxel map implementation and [octomap_ros](http://wiki.ros.org/octomap) for octree-based map. 
+This repo has been tested on ROS Melodic with Ubuntu 18.04 and ROS Noetic with Ubuntu 20.04 and it depends on [map_manager](https://github.com/Zhefan-Xu/map_manager) which provides the occupancy voxel map implementation and [octomap](http://wiki.ros.org/octomap) for octree-based map. 
 
 ```
 # install dependency
