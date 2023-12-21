@@ -32,7 +32,7 @@ The example of the exploration planner can be shown as below (Please follow this
 
 The related paper can be found on:
 
-**Zhefan Xu\*, Christopher Suzuki\*, Xiaoyang Zhan, Kenji Shimada, "Heuristic-based Incremental Probabilistic Roadmap for Efficient UAV Exploration in Dynamic Environments”, arxiv, 2023.** [\[arxiv preprint\]](https://arxiv.org/pdf/2303.00132.pdf) [\[video\]](https://youtu.be/fjVJCgDemjc?si=9nsWhReMeJH5JC3Q).
+**Zhefan Xu\*, Christopher Suzuki\*, Xiaoyang Zhan, Kenji Shimada, "Heuristic-based Incremental Probabilistic Roadmap for Efficient UAV Exploration in Dynamic Environments”, arxiv, 2023.** [\[paper\]](https://arxiv.org/pdf/2303.00132.pdf) [\[video\]](https://youtu.be/fjVJCgDemjc?si=9nsWhReMeJH5JC3Q).
 
 **Zhefan Xu, Di Deng, and Kenji Shimada, “Autonomous UAV Exploration of Dynamic Environments via Incremental Sampling and Probabilistic Roadmap”, IEEE Robotics and Automation Letters (RA-L), 2021.** [\[paper\]](https://ieeexplore.ieee.org/document/9362184) [\[video\]](https://youtu.be/ileyP4DRBjU?si=KFJLt-rLCa3tFaRH)
 
@@ -71,7 +71,7 @@ Please change all the frame id ```/map``` to ```map``` in ```octomap_mapping/oct
 cd ~/catkin_ws
 catkin_make
 ```
-## VI. Citation and Reference:
+## VI. Citation and Reference
 If you find this work useful, please cite the paper:
 ```
 @article{xu2023heuristic,
