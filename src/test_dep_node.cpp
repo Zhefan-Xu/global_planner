@@ -30,7 +30,7 @@ void replanDEP(){
 		p->setMap(m);
 		cout << "start planning." << endl;
 		ros::Time startTime = ros::Time::now();
-		bool replanSuccess = p->makePlan();
+		p->makePlan();
 		ros::Time endTime = ros::Time::now();
 		cout << "planning time: " << (endTime - startTime).toSec() << "s." << endl;
 		cout << "end planning." << endl;

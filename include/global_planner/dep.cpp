@@ -309,29 +309,29 @@ namespace globalPlanner{
 	bool DEP::makePlan(){
 		if (not this->odomReceived_) return false;
 		// cout << "start detecting frontier" << endl;
-		ros::Time frontierStartTime = ros::Time::now();
+		// ros::Time frontierStartTime = ros::Time::now();
 		this->detectFrontierRegion(this->frontierPointPairs_);
-		ros::Time frontierEndTime = ros::Time::now();
+		// ros::Time frontierEndTime = ros::Time::now();
 		// cout << "frontier detection time: " << (frontierEndTime - frontierStartTime).toSec() << endl;
 
 
 		// cout << "start building roadmap" << endl;
-		ros::Time buildStartTime = ros::Time::now();
+		// ros::Time buildStartTime = ros::Time::now();
 		this->buildRoadMap();
-		ros::Time buildEndTime = ros::Time::now();
+		// ros::Time buildEndTime = ros::Time::now();
 		// cout << "build roadmap time: " << (buildEndTime - buildStartTime).toSec() << endl;
 
 		// cout << "start pruning nodes" << endl;
-		ros::Time updateStartTime = ros::Time::now();
+		// ros::Time updateStartTime = ros::Time::now();
 		this->pruneNodes();
 
 		// cout << "start update information gain" << endl;
 		this->updateInformationGain();
-		ros::Time updateEndTime = ros::Time::now();
+		// ros::Time updateEndTime = ros::Time::now();
 		// cout << "update time: " << (updateEndTime - updateStartTime).toSec() << endl;
 
 		// cout << "start get goal candidates" << endl;
-		ros::Time pathStartTime = ros::Time::now();
+		// ros::Time pathStartTime = ros::Time::now();
 		this->getBestViewCandidates(this->goalCandidates_);
 
 		// cout << "finish best view candidate with size: " << this->goalCandidates_.size() << endl;
@@ -345,7 +345,7 @@ namespace globalPlanner{
 		}
 
 		this->findBestPath(this->candidatePaths_, this->bestPath_);
-		ros::Time pathEndTime = ros::Time::now();
+		// ros::Time pathEndTime = ros::Time::now();
 		// cout << "path time: " << (pathEndTime - pathStartTime).toSec() << endl;
 		// cout << "found best path with size: " << this->bestPath_.size() << endl;
 		return true;
